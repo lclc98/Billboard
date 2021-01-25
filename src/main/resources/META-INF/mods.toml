@@ -1,0 +1,26 @@
+modLoader="javafml"
+loaderVersion="[31,)"
+license="LGPL v2.1"
+
+[[mods]]
+modId="billboard"
+version="${file.jarVersion}"
+displayName="Billboard"
+authors="lclc98"
+description='''
+
+      '''
+
+[[dependencies.billboard]]
+modId="forge"
+mandatory=true
+versionRange="[35,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.billboard]]
+modId="minecraft"
+mandatory=true
+versionRange="[1.16.4]"
+ordering="NONE"
+side="BOTH"
