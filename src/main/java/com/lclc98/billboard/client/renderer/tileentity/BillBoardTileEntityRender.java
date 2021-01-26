@@ -47,7 +47,6 @@ public class BillBoardTileEntityRender extends TileEntityRenderer<BillboardTileE
             te.dirty = false;
         }
 
-
         final ResourceLocation texture = this.getTexture(billboard);
 
         Direction direction = te.getBlockState().get(BillboardBlock.FACING);

@@ -23,7 +23,7 @@ public class BillboardTileEntity extends TileEntity {
 
     private final LazyValue<ChunkPos> chunkPos;
 
-    private String textureId = "DHHCsdx";
+    private String textureId = "y9S27IN";
     private ResourceLocation textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + textureId.toLowerCase());
 
     private Set<BlockPos> children = new HashSet<>();
@@ -46,17 +46,22 @@ public class BillboardTileEntity extends TileEntity {
         this.textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + textureId.toLowerCase());
     }
 
-    public static void sendToTracking(ServerWorld world, ChunkPos chunkPos, IPacket<?> packet, boolean boundaryOnly) {
-
-        world.getChunkProvider().chunkManager.getTrackingPlayers(chunkPos, boundaryOnly).forEach(p -> p.connection.sendPacket(packet));
-    }
-
     public ResourceLocation getTextureLocation() {
         return this.textureLocation;
     }
 
     public String getTextureId() {
         return this.textureId;
+    }
+    public void setUV(Vector4f uv) {
+        this.uv = uv;
+    }
+
+    public Vector4f getUV() {
+        if (this.uv == null) {
+            return new Vector4f(0, 0, 1, 1);
+        }
+        return this.uv;
     }
 
     public void addChild(BlockPos childPos) {
@@ -90,6 +95,7 @@ public class BillboardTileEntity extends TileEntity {
         if (isParent()) {
             return this;
         }
+
         TileEntity tileEntity = this.world.getTileEntity(this.parentPos);
         if (tileEntity instanceof BillboardTileEntity) {
             return (BillboardTileEntity) tileEntity;
@@ -101,7 +107,7 @@ public class BillboardTileEntity extends TileEntity {
 
     public void sync() {
         if (this.world instanceof ServerWorld) {
-            if(this.isParent()){
+            if (this.isParent()) {
                 for (BlockPos pos : this.children) {
                     TileEntity childTE = this.world.getTileEntity(pos);
                     if (childTE instanceof BillboardTileEntity) {
@@ -111,9 +117,11 @@ public class BillboardTileEntity extends TileEntity {
             }
             final IPacket<?> packet = this.getUpdatePacket();
             sendToTracking((ServerWorld) this.world, this.chunkPos.getValue(), packet, false);
-        } else {
-            System.out.println("ERROR");
         }
+    }
+
+    public static void sendToTracking(ServerWorld world, ChunkPos chunkPos, IPacket<?> packet, boolean boundaryOnly) {
+        world.getChunkProvider().chunkManager.getTrackingPlayers(chunkPos, boundaryOnly).forEach(p -> p.connection.sendPacket(packet));
     }
 
     @Override
@@ -225,16 +233,5 @@ public class BillboardTileEntity extends TileEntity {
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
         super.onDataPacket(net, packet);
         this.read(this.getBlockState(), packet.getNbtCompound());
-    }
-
-    public void setUV(Vector4f uv) {
-        this.uv = uv;
-    }
-
-    public Vector4f getUV() {
-        if (this.uv == null) {
-            return new Vector4f(0, 0, 1, 1);
-        }
-        return this.uv;
     }
 }

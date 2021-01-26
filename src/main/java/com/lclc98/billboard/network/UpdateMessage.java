@@ -28,7 +28,6 @@ public class UpdateMessage {
     }
 
     public static UpdateMessage decode(PacketBuffer buf) {
-
         return new UpdateMessage(buf.readString(32767), buf.readBlockPos());
     }
 

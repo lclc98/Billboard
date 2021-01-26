@@ -36,7 +36,6 @@ public class Billboard {
     );
 
     public Billboard() {
-
         NETWORK.registerMessage(0, UpdateMessage.class, UpdateMessage::encode, UpdateMessage::decode, (message, context) -> context.get().enqueueWork(() -> {
             UpdateMessage.handle(message, context);
             context.get().setPacketHandled(true);
@@ -52,13 +51,11 @@ public class Billboard {
 
     @SubscribeEvent
     public static void registerBlock(RegistryEvent.Register<Block> register) {
-
         register.getRegistry().register(BILLBOARD_BLOCK);
     }
 
     @SubscribeEvent
     public static void registerItem(RegistryEvent.Register<Item> register) {
-
         Item item = new BlockItem(BILLBOARD_BLOCK, new Item.Properties().group(ItemGroup.MISC));
         item.setRegistryName(BILLBOARD_BLOCK.getRegistryName());
         register.getRegistry().register(item);
@@ -66,7 +63,6 @@ public class Billboard {
 
     @SubscribeEvent
     public static void registerTileEntity(RegistryEvent.Register<TileEntityType<?>> register) {
-
         BILLBOARD_TE_TYPE.setRegistryName(new ResourceLocation(MOD_ID, "billboard"));
         register.getRegistry().register(BILLBOARD_TE_TYPE);
     }
