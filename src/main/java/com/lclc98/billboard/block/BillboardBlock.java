@@ -22,7 +22,6 @@ import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
-import java.util.UUID;
 
 public class BillboardBlock extends ContainerBlock {
     public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
@@ -39,7 +38,7 @@ public class BillboardBlock extends ContainerBlock {
             TileEntity te = worldIn.getTileEntity(pos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity parent = ((BillboardTileEntity) te).getParent();
-                if (!parent.locked || player.hasPermissionLevel(2) || parent.ownerId == null|| parent.ownerId.equals(player.getUniqueID()) ) {
+                if (parent.hasPermission(player)) {
                     RenderUtil.openGui(parent);
                 } else {
                     player.sendStatusMessage(new StringTextComponent("You don't have permission to open this."), false);
@@ -52,10 +51,10 @@ public class BillboardBlock extends ContainerBlock {
 
     @Override
     public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (worldIn.isRemote || placer == null) {
+        if (worldIn.isRemote || !(placer instanceof PlayerEntity)) {
             return;
         }
-        UUID uuid = placer.getUniqueID();
+        PlayerEntity uuid = (PlayerEntity) placer;
 
         if (!placer.isSneaking()) {
             Direction currentFacing = state.get(FACING);
@@ -76,7 +75,7 @@ public class BillboardBlock extends ContainerBlock {
         TileEntity te = worldIn.getTileEntity(pos);
         if (te instanceof BillboardTileEntity) {
             BillboardTileEntity parent = (BillboardTileEntity) te;
-            parent.ownerId = uuid;
+            parent.ownerId = placer.getUniqueID();
         }
     }
 
@@ -95,13 +94,13 @@ public class BillboardBlock extends ContainerBlock {
         return VoxelShapes.create(x1, 0, z1, x2, 1, z2);
     }
 
-    public boolean addParent(UUID ownerId, World world, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
+    public boolean addParent(PlayerEntity player, World world, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
         BlockState offsetState = world.getBlockState(offsetPos);
         if (offsetState.getBlock() == this && offsetState.get(FACING) == currentFacing) {
             TileEntity te = world.getTileEntity(offsetPos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity parent = (BillboardTileEntity) te;
-                if (!parent.locked || parent.ownerId.equals(ownerId)) {
+                if (parent.hasPermission(player)) {
                     parent.addChild(pos);
                     return true;
                 }

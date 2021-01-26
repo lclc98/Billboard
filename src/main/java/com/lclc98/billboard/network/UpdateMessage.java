@@ -7,7 +7,6 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 
-import java.util.UUID;
 import java.util.function.Supplier;
 
 public class UpdateMessage {
@@ -42,14 +41,9 @@ public class UpdateMessage {
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity billboard = (BillboardTileEntity) te;
 
-                UUID uuid = sender.getUniqueID();
-                if (billboard.ownerId == null) {
-                    billboard.ownerId = uuid;
-                }
-
-                if (!billboard.locked || sender.hasPermissionLevel(2) || billboard.ownerId.equals(uuid)) {
+                if (billboard.hasPermission(sender)) {
                     billboard.setTexture(message.textureId);
-                    if (billboard.ownerId.equals(uuid)) {
+                    if (billboard.ownerId.equals(sender.getUniqueID())) {
                         billboard.locked = message.locked;
                     }
                     billboard.sync();

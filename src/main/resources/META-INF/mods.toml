@@ -14,13 +14,13 @@ description='''
 [[dependencies.billboard]]
 modId="forge"
 mandatory=true
-versionRange="[35,)"
+versionRange="[36,)"
 ordering="NONE"
 side="BOTH"
 
 [[dependencies.billboard]]
 modId="minecraft"
 mandatory=true
-versionRange="[1.16.4]"
+versionRange="[1.16.5]"
 ordering="NONE"
 side="BOTH"

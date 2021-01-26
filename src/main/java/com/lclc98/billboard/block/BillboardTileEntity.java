@@ -2,6 +2,7 @@ package com.lclc98.billboard.block;
 
 import com.lclc98.billboard.Billboard;
 import net.minecraft.block.BlockState;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.INBT;
 import net.minecraft.nbt.ListNBT;
@@ -166,6 +167,13 @@ public class BillboardTileEntity extends TileEntity {
                 billboard.sync();
             }
         }
+    }
+
+    public boolean hasPermission(PlayerEntity player) {
+        if (this.ownerId == null) {
+            this.ownerId = player.getUniqueID();
+        }
+        return !this.locked || player.hasPermissionLevel(2) || this.ownerId.equals(player.getUniqueID());
     }
 
     @Override
