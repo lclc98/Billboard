@@ -17,10 +17,12 @@ import net.minecraft.util.math.BlockRayTraceResult;
 import net.minecraft.util.math.shapes.ISelectionContext;
 import net.minecraft.util.math.shapes.VoxelShape;
 import net.minecraft.util.math.shapes.VoxelShapes;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.IBlockReader;
 import net.minecraft.world.World;
 
 import javax.annotation.Nullable;
+import java.util.UUID;
 
 public class BillboardBlock extends ContainerBlock {
     public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
@@ -36,8 +38,12 @@ public class BillboardBlock extends ContainerBlock {
         if (worldIn.isRemote) {
             TileEntity te = worldIn.getTileEntity(pos);
             if (te instanceof BillboardTileEntity) {
-                BillboardTileEntity billboard = (BillboardTileEntity) te;
-                RenderUtil.openGui(billboard);
+                BillboardTileEntity parent = ((BillboardTileEntity) te).getParent();
+                if (!parent.locked || player.hasPermissionLevel(2) || parent.ownerId == null|| parent.ownerId.equals(player.getUniqueID()) ) {
+                    RenderUtil.openGui(parent);
+                } else {
+                    player.sendStatusMessage(new StringTextComponent("You don't have permission to open this."), false);
+                }
             }
         }
 
@@ -46,21 +52,31 @@ public class BillboardBlock extends ContainerBlock {
 
     @Override
     public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (worldIn.isRemote) {
+        if (worldIn.isRemote || placer == null) {
             return;
         }
+        UUID uuid = placer.getUniqueID();
+
         if (!placer.isSneaking()) {
             Direction currentFacing = state.get(FACING);
-            if (this.addParent(worldIn, pos, pos.offset(Direction.UP), currentFacing)) {
+
+            if (this.addParent(uuid, worldIn, pos, pos.offset(Direction.UP), currentFacing)) {
                 return;
             }
-            if (this.addParent(worldIn, pos, pos.offset(Direction.DOWN), currentFacing)) {
+            if (this.addParent(uuid, worldIn, pos, pos.offset(Direction.DOWN), currentFacing)) {
                 return;
             }
-            if (this.addParent(worldIn, pos, pos.offset(state.get(FACING).rotateY()), currentFacing)) {
+            if (this.addParent(uuid, worldIn, pos, pos.offset(state.get(FACING).rotateY()), currentFacing)) {
                 return;
             }
-            this.addParent(worldIn, pos, pos.offset(state.get(FACING).rotateYCCW()), currentFacing);
+            if (this.addParent(uuid, worldIn, pos, pos.offset(state.get(FACING).rotateYCCW()), currentFacing)) {
+                return;
+            }
+        }
+        TileEntity te = worldIn.getTileEntity(pos);
+        if (te instanceof BillboardTileEntity) {
+            BillboardTileEntity parent = (BillboardTileEntity) te;
+            parent.ownerId = uuid;
         }
     }
 
@@ -79,14 +95,16 @@ public class BillboardBlock extends ContainerBlock {
         return VoxelShapes.create(x1, 0, z1, x2, 1, z2);
     }
 
-    public boolean addParent(World world, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
+    public boolean addParent(UUID ownerId, World world, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
         BlockState offsetState = world.getBlockState(offsetPos);
         if (offsetState.getBlock() == this && offsetState.get(FACING) == currentFacing) {
             TileEntity te = world.getTileEntity(offsetPos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity parent = (BillboardTileEntity) te;
-                parent.addChild(pos);
-                return true;
+                if (!parent.locked || parent.ownerId.equals(ownerId)) {
+                    parent.addChild(pos);
+                    return true;
+                }
             }
         }
         return false;

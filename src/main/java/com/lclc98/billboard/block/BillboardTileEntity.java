@@ -18,14 +18,15 @@ import net.minecraft.world.server.ServerWorld;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.UUID;
 
 public class BillboardTileEntity extends TileEntity {
 
     private final LazyValue<ChunkPos> chunkPos;
 
     private String textureId = "y9S27IN";
-    private ResourceLocation textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + textureId.toLowerCase());
-
+    public UUID ownerId;
+    public boolean locked = true;
     private Set<BlockPos> children = new HashSet<>();
     private BlockPos parentPos;
 
@@ -35,6 +36,7 @@ public class BillboardTileEntity extends TileEntity {
     public int maxHeight;
     public Vector4f uv;
     public boolean dirty;
+    private ResourceLocation textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + textureId.toLowerCase());
 
     public BillboardTileEntity() {
         super(Billboard.BILLBOARD_TE_TYPE);
@@ -53,6 +55,7 @@ public class BillboardTileEntity extends TileEntity {
     public String getTextureId() {
         return this.textureId;
     }
+
     public void setUV(Vector4f uv) {
         this.uv = uv;
     }
@@ -141,6 +144,8 @@ public class BillboardTileEntity extends TileEntity {
                     BillboardTileEntity billboard = (BillboardTileEntity) tileEntity;
                     billboard.parentPos = null;
                     billboard.children = this.children;
+                    billboard.ownerId = this.ownerId;
+                    billboard.locked = this.locked;
                     billboard.setTexture(this.textureId);
                     for (BlockPos pos : billboard.children) {
                         TileEntity childTE = this.world.getTileEntity(pos);
@@ -166,6 +171,14 @@ public class BillboardTileEntity extends TileEntity {
     @Override
     public void read(BlockState state, CompoundNBT nbt) {
         super.read(state, nbt);
+
+        if (nbt.contains("ownerId")) {
+            this.ownerId = nbt.getUniqueId("ownerId");
+        }
+
+        if (nbt.contains("locked")) {
+            this.locked = nbt.getBoolean("locked");
+        }
 
         if (nbt.contains("textureId")) {
             this.setTexture(nbt.getString("textureId"));
@@ -194,6 +207,12 @@ public class BillboardTileEntity extends TileEntity {
 
     @Override
     public CompoundNBT write(CompoundNBT compound) {
+        if (this.ownerId != null) {
+            compound.putUniqueId("ownerId", this.ownerId);
+        }
+
+        compound.putBoolean("locked", this.locked);
+
         if (this.textureId != null) {
             compound.putString("textureId", this.textureId);
         }

@@ -7,28 +7,32 @@ import net.minecraft.tileentity.TileEntity;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.network.NetworkEvent;
 
+import java.util.UUID;
 import java.util.function.Supplier;
 
 public class UpdateMessage {
-    public String textureId;
     public BlockPos pos;
+    public String textureId;
+    public boolean locked;
 
     public UpdateMessage() {
 
     }
 
-    public UpdateMessage(String textureId, BlockPos pos) {
-        this.textureId = textureId;
+    public UpdateMessage(BlockPos pos, String textureId, boolean locked) {
         this.pos = pos;
+        this.textureId = textureId;
+        this.locked = locked;
     }
 
     public static void encode(UpdateMessage message, PacketBuffer buf) {
-        buf.writeString(message.textureId);
         buf.writeBlockPos(message.pos);
+        buf.writeString(message.textureId);
+        buf.writeBoolean(message.locked);
     }
 
     public static UpdateMessage decode(PacketBuffer buf) {
-        return new UpdateMessage(buf.readString(32767), buf.readBlockPos());
+        return new UpdateMessage(buf.readBlockPos(), buf.readString(32767), buf.readBoolean());
     }
 
     public static void handle(UpdateMessage message, Supplier<NetworkEvent.Context> ctx) {
@@ -37,8 +41,19 @@ public class UpdateMessage {
             TileEntity te = sender.world.getTileEntity(message.pos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity billboard = (BillboardTileEntity) te;
-                billboard.setTexture(message.textureId);
-                billboard.sync();
+
+                UUID uuid = sender.getUniqueID();
+                if (billboard.ownerId == null) {
+                    billboard.ownerId = uuid;
+                }
+
+                if (!billboard.locked || sender.hasPermissionLevel(2) || billboard.ownerId.equals(uuid)) {
+                    billboard.setTexture(message.textureId);
+                    if (billboard.ownerId.equals(uuid)) {
+                        billboard.locked = message.locked;
+                    }
+                    billboard.sync();
+                }
             }
         }
     }

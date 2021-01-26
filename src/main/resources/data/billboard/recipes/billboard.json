@@ -1,0 +1,19 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "###",
+    "#P#",
+    "###"
+  ],
+  "key": {
+    "P": {
+      "item": "paper"
+    },
+    "#": {
+      "tag": "planks"
+    }
+  },
+  "result": {
+    "item": "billboard:billboard"
+  }
+}
