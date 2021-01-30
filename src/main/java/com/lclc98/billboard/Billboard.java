@@ -27,6 +27,7 @@ public class Billboard {
 
     public static final Block BILLBOARD_BLOCK = new BillboardBlock();
     public static final TileEntityType<BillboardTileEntity> BILLBOARD_TE_TYPE = TileEntityType.Builder.create(BillboardTileEntity::new, BILLBOARD_BLOCK).build(null);
+    public static Configuration config;
 
     private static final String PROTOCOL_VERSION = "1";
     public static final SimpleChannel NETWORK = NetworkRegistry.newSimpleChannel(new ResourceLocation(MOD_ID, "main"),
@@ -43,6 +44,7 @@ public class Billboard {
 
         final IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
         modBus.addListener(this::setupClient);
+        config = new Configuration();
     }
 
     private void setupClient(FMLClientSetupEvent event) {

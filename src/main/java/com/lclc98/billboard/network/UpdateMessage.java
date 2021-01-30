@@ -1,6 +1,7 @@
 package com.lclc98.billboard.network;
 
 import com.lclc98.billboard.block.BillboardTileEntity;
+import com.lclc98.billboard.util.TextureUtil;
 import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.network.PacketBuffer;
 import net.minecraft.tileentity.TileEntity;
@@ -11,22 +12,22 @@ import java.util.function.Supplier;
 
 public class UpdateMessage {
     public BlockPos pos;
-    public String textureId;
+    public String textureUrl;
     public boolean locked;
 
     public UpdateMessage() {
 
     }
 
-    public UpdateMessage(BlockPos pos, String textureId, boolean locked) {
+    public UpdateMessage(BlockPos pos, String textureUrl, boolean locked) {
         this.pos = pos;
-        this.textureId = textureId;
+        this.textureUrl = textureUrl;
         this.locked = locked;
     }
 
     public static void encode(UpdateMessage message, PacketBuffer buf) {
         buf.writeBlockPos(message.pos);
-        buf.writeString(message.textureId);
+        buf.writeString(message.textureUrl);
         buf.writeBoolean(message.locked);
     }
 
@@ -42,7 +43,9 @@ public class UpdateMessage {
                 BillboardTileEntity billboard = (BillboardTileEntity) te;
 
                 if (billboard.hasPermission(sender)) {
-                    billboard.setTexture(message.textureId);
+                    if (TextureUtil.validateUrl(message.textureUrl)) {
+                        billboard.setTexture(message.textureUrl);
+                    }
                     if (billboard.ownerId.equals(sender.getUniqueID())) {
                         billboard.locked = message.locked;
                     }

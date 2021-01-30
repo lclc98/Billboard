@@ -16,6 +16,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.math.vector.Vector4f;
 import net.minecraft.world.server.ServerWorld;
+import org.apache.commons.codec.digest.DigestUtils;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -25,7 +26,6 @@ public class BillboardTileEntity extends TileEntity {
 
     private final LazyValue<ChunkPos> chunkPos;
 
-    private String textureId = "y9S27IN";
     public UUID ownerId;
     public boolean locked = true;
     private Set<BlockPos> children = new HashSet<>();
@@ -37,24 +37,26 @@ public class BillboardTileEntity extends TileEntity {
     public int maxHeight;
     public Vector4f uv;
     public boolean dirty;
-    private ResourceLocation textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + textureId.toLowerCase());
+
+    private String textureUrl = "https://i.imgur.com/y9S27IN.png";
+    private ResourceLocation textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + DigestUtils.sha256Hex(this.textureUrl));
 
     public BillboardTileEntity() {
         super(Billboard.BILLBOARD_TE_TYPE);
         this.chunkPos = new LazyValue<>(() -> new ChunkPos(this.pos));
     }
 
-    public void setTexture(String textureId) {
-        this.textureId = textureId;
-        this.textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + textureId.toLowerCase());
+    public void setTexture(String textureUrl) {
+        this.textureUrl = textureUrl;
+        this.textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + DigestUtils.sha256Hex(this.textureUrl));
     }
 
     public ResourceLocation getTextureLocation() {
         return this.textureLocation;
     }
 
-    public String getTextureId() {
-        return this.textureId;
+    public String getTextureUrl() {
+        return this.textureUrl;
     }
 
     public void setUV(Vector4f uv) {
@@ -147,7 +149,7 @@ public class BillboardTileEntity extends TileEntity {
                     billboard.children = this.children;
                     billboard.ownerId = this.ownerId;
                     billboard.locked = this.locked;
-                    billboard.setTexture(this.textureId);
+                    billboard.setTexture(this.textureUrl);
                     for (BlockPos pos : billboard.children) {
                         TileEntity childTE = this.world.getTileEntity(pos);
                         if (childTE instanceof BillboardTileEntity) {
@@ -188,8 +190,13 @@ public class BillboardTileEntity extends TileEntity {
             this.locked = nbt.getBoolean("locked");
         }
 
+        // TODO Deprecated
         if (nbt.contains("textureId")) {
-            this.setTexture(nbt.getString("textureId"));
+            this.setTexture(String.format("https://i.imgur.com/%s.png", nbt.getString("textureId")));
+        }
+
+        if (nbt.contains("textureUrl")) {
+            this.setTexture(nbt.getString("textureUrl"));
         }
 
         if (nbt.contains("parentX")) {
@@ -221,8 +228,8 @@ public class BillboardTileEntity extends TileEntity {
 
         compound.putBoolean("locked", this.locked);
 
-        if (this.textureId != null) {
-            compound.putString("textureId", this.textureId);
+        if (this.textureUrl != null) {
+            compound.putString("textureUrl", this.textureUrl);
         }
 
         if (this.parentPos != null) {
