@@ -37,30 +37,30 @@ public class BillBoardTileEntityRender extends TileEntityRenderer<BillboardTileE
         }
 
         if (te.dirty) {
-            te.setUV(RenderUtil.getUV(billboard, te.getPos()));
+            te.setUV(RenderUtil.getUV(billboard, te.getBlockPos()));
             te.dirty = false;
         }
 
-        Direction direction = te.getBlockState().get(BillboardBlock.FACING);
-        matrixStackIn.push();
-        Matrix4f matrix = matrixStackIn.getLast().getMatrix();
+        Direction direction = te.getBlockState().getValue(BillboardBlock.FACING);
+        matrixStackIn.pushPose();
+        Matrix4f matrix = matrixStackIn.last().pose();
         matrixStackIn.translate(0.5F, 0.5F, 0.5F);
-        matrixStackIn.translate(direction.getXOffset() * 0.5F, 0, direction.getZOffset() * 0.5F);
-        matrixStackIn.rotate(direction.getOpposite().getRotation());
+        matrixStackIn.translate(direction.getStepX() * 0.5F, 0, direction.getStepZ() * 0.5F);
+        matrixStackIn.mulPose(direction.getOpposite().getRotation());
 
         renderSquare(TEXTURE_WHITE, new Vector4f(0, 1, 0, 1), bufferIn, matrix, combinedOverlayIn, combinedLightIn);
 
         renderSquare(TextureUtil.getTexture(billboard), te.getUV(), bufferIn, matrix, combinedOverlayIn, combinedLightIn);
-        matrixStackIn.pop();
+        matrixStackIn.popPose();
     }
 
     public void renderSquare(ResourceLocation texture, Vector4f uv, IRenderTypeBuffer bufferIn, Matrix4f matrix, int combinedOverlayIn, int combinedLightIn) {
-        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.getEntityCutout(texture));
+        IVertexBuilder ivertexbuilder = bufferIn.getBuffer(RenderType.entityCutout(texture));
         float f = 1.0f / 16.0f;
 
-        ivertexbuilder.pos(matrix, 0.5F, 1 - f - 0.001F, -0.5F).color(255, 255, 255, 255).tex(uv.getX(), uv.getY()).overlay(combinedOverlayIn).lightmap(combinedLightIn).normal(0, 0, 1f).endVertex();
-        ivertexbuilder.pos(matrix, 0.5F, 1 - f - 0.001F, 0.5F).color(255, 255, 255, 255).tex(uv.getX(), uv.getW()).overlay(combinedOverlayIn).lightmap(combinedLightIn).normal(0, 0, 1f).endVertex();
-        ivertexbuilder.pos(matrix, -0.5F, 1 - f - 0.001F, 0.5F).color(255, 255, 255, 255).tex(uv.getZ(), uv.getW()).overlay(combinedOverlayIn).lightmap(combinedLightIn).normal(0, 0, 1f).endVertex();
-        ivertexbuilder.pos(matrix, -0.5F, 1 - f - 0.001F, -0.5F).color(255, 255, 255, 255).tex(uv.getZ(), uv.getY()).overlay(combinedOverlayIn).lightmap(combinedLightIn).normal(0, 0, 1f).endVertex();
+        ivertexbuilder.vertex(matrix, 0.5F, 1 - f - 0.001F, -0.5F).color(255, 255, 255, 255).uv(uv.x(), uv.y()).overlayCoords(combinedOverlayIn).uv2(combinedLightIn).normal(0, 0, 1f).endVertex();
+        ivertexbuilder.vertex(matrix, 0.5F, 1 - f - 0.001F, 0.5F).color(255, 255, 255, 255).uv(uv.x(), uv.w()).overlayCoords(combinedOverlayIn).uv2(combinedLightIn).normal(0, 0, 1f).endVertex();
+        ivertexbuilder.vertex(matrix, -0.5F, 1 - f - 0.001F, 0.5F).color(255, 255, 255, 255).uv(uv.z(), uv.w()).overlayCoords(combinedOverlayIn).uv2(combinedLightIn).normal(0, 0, 1f).endVertex();
+        ivertexbuilder.vertex(matrix, -0.5F, 1 - f - 0.001F, -0.5F).color(255, 255, 255, 255).uv(uv.z(), uv.y()).overlayCoords(combinedOverlayIn).uv2(combinedLightIn).normal(0, 0, 1f).endVertex();
     }
 }

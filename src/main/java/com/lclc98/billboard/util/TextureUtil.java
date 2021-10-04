@@ -26,7 +26,7 @@ public class TextureUtil {
         if (texture == null) {
             String fileName = FilenameUtils.getName(te.getTextureUrl());
             texture = new DownloadingTexture(new File("cache/billboard", fileName), te.getTextureUrl(), TEXTURE_BILLBOARD, false, null);
-            texturemanager.loadTexture(textureLocation, texture);
+            texturemanager.register(textureLocation, texture);
         }
 
         return textureLocation;

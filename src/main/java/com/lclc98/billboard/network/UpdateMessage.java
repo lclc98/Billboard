@@ -27,18 +27,18 @@ public class UpdateMessage {
 
     public static void encode(UpdateMessage message, PacketBuffer buf) {
         buf.writeBlockPos(message.pos);
-        buf.writeString(message.textureUrl);
+        buf.writeUtf(message.textureUrl);
         buf.writeBoolean(message.locked);
     }
 
     public static UpdateMessage decode(PacketBuffer buf) {
-        return new UpdateMessage(buf.readBlockPos(), buf.readString(32767), buf.readBoolean());
+        return new UpdateMessage(buf.readBlockPos(), buf.readUtf(), buf.readBoolean());
     }
 
     public static void handle(UpdateMessage message, Supplier<NetworkEvent.Context> ctx) {
         ServerPlayerEntity sender = ctx.get().getSender();
         if (sender != null) {
-            TileEntity te = sender.world.getTileEntity(message.pos);
+            TileEntity te = sender.level.getBlockEntity(message.pos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity billboard = (BillboardTileEntity) te;
 
@@ -46,7 +46,7 @@ public class UpdateMessage {
                     if (TextureUtil.validateUrl(message.textureUrl)) {
                         billboard.setTexture(message.textureUrl);
                     }
-                    if (billboard.ownerId.equals(sender.getUniqueID())) {
+                    if (billboard.ownerId.equals(sender.getUUID())) {
                         billboard.locked = message.locked;
                     }
                     billboard.sync();

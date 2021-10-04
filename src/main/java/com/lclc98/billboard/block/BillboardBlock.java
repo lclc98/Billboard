@@ -24,24 +24,24 @@ import net.minecraft.world.World;
 import javax.annotation.Nullable;
 
 public class BillboardBlock extends ContainerBlock {
-    public static final DirectionProperty FACING = HorizontalBlock.HORIZONTAL_FACING;
+    public static final DirectionProperty FACING = HorizontalBlock.FACING;
 
     public BillboardBlock() {
-        super(Properties.create(Material.WOOD).doesNotBlockMovement());
+        super(Properties.of(Material.WOOD).noCollission());
         this.setRegistryName(new ResourceLocation(Billboard.MOD_ID, "billboard"));
-        this.setDefaultState(this.stateContainer.getBaseState().with(FACING, Direction.NORTH));
+        this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    public ActionResultType onBlockActivated(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isRemote) {
-            TileEntity te = worldIn.getTileEntity(pos);
+    public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
+        if (worldIn.isClientSide) {
+            TileEntity te = worldIn.getBlockEntity(pos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity parent = ((BillboardTileEntity) te).getParent();
                 if (parent.hasPermission(player)) {
                     RenderUtil.openGui(parent);
                 } else {
-                    player.sendStatusMessage(new StringTextComponent("You don't have permission to open this."), false);
+                    player.displayClientMessage(new StringTextComponent("You don't have permission to open this."), false);
                 }
             }
         }
@@ -50,54 +50,54 @@ public class BillboardBlock extends ContainerBlock {
     }
 
     @Override
-    public void onBlockPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (worldIn.isRemote || !(placer instanceof PlayerEntity)) {
+    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
+        if (worldIn.isClientSide || !(placer instanceof PlayerEntity)) {
             return;
         }
         PlayerEntity uuid = (PlayerEntity) placer;
 
-        if (!placer.isSneaking()) {
-            Direction currentFacing = state.get(FACING);
+        if (!placer.isCrouching()) {
+            Direction currentFacing = state.getValue(FACING);
 
-            if (this.addParent(uuid, worldIn, pos, pos.offset(Direction.UP), currentFacing)) {
+            if (this.addParent(uuid, worldIn, pos, pos.relative(Direction.UP), currentFacing)) {
                 return;
             }
-            if (this.addParent(uuid, worldIn, pos, pos.offset(Direction.DOWN), currentFacing)) {
+            if (this.addParent(uuid, worldIn, pos, pos.relative(Direction.DOWN), currentFacing)) {
                 return;
             }
-            if (this.addParent(uuid, worldIn, pos, pos.offset(state.get(FACING).rotateY()), currentFacing)) {
+            if (this.addParent(uuid, worldIn, pos, pos.relative(state.getValue(FACING).getClockWise()), currentFacing)) {
                 return;
             }
-            if (this.addParent(uuid, worldIn, pos, pos.offset(state.get(FACING).rotateYCCW()), currentFacing)) {
+            if (this.addParent(uuid, worldIn, pos, pos.relative(state.getValue(FACING).getCounterClockWise()), currentFacing)) {
                 return;
             }
         }
-        TileEntity te = worldIn.getTileEntity(pos);
+        TileEntity te = worldIn.getBlockEntity(pos);
         if (te instanceof BillboardTileEntity) {
             BillboardTileEntity parent = (BillboardTileEntity) te;
-            parent.ownerId = placer.getUniqueID();
+            parent.ownerId = placer.getUUID();
         }
     }
 
     @Override
     public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
         if (!state.hasProperty(FACING)) {
-            return VoxelShapes.fullCube();
+            return VoxelShapes.block();
         }
         final float f = 1.0f / 16.0f;
-        Direction direction = state.get(FACING);
+        Direction direction = state.getValue(FACING);
 
         float x1 = direction == Direction.WEST ? 1.0f - f : 0;
         float x2 = direction == Direction.EAST ? f : 1;
         float z1 = direction == Direction.NORTH ? 1.0f - f : 0;
         float z2 = direction == Direction.SOUTH ? f : 1;
-        return VoxelShapes.create(x1, 0, z1, x2, 1, z2);
+        return VoxelShapes.box(x1, 0, z1, x2, 1, z2);
     }
 
     public boolean addParent(PlayerEntity player, World world, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
         BlockState offsetState = world.getBlockState(offsetPos);
-        if (offsetState.getBlock() == this && offsetState.get(FACING) == currentFacing) {
-            TileEntity te = world.getTileEntity(offsetPos);
+        if (offsetState.getBlock() == this && offsetState.getValue(FACING) == currentFacing) {
+            TileEntity te = world.getBlockEntity(offsetPos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity parent = (BillboardTileEntity) te;
                 if (parent.hasPermission(player)) {
@@ -111,37 +111,37 @@ public class BillboardBlock extends ContainerBlock {
 
     @Override
     public BlockState getStateForPlacement(BlockItemUseContext context) {
-        Direction direction = context.getPlacementHorizontalFacing().getOpposite();
-        return this.getDefaultState().with(FACING, direction);
+        Direction direction = context.getHorizontalDirection().getOpposite();
+        return this.defaultBlockState().setValue(FACING, direction);
     }
 
     @Override
-    public TileEntity createNewTileEntity(IBlockReader worldIn) {
+    public TileEntity newBlockEntity(IBlockReader worldIn) {
         return new BillboardTileEntity();
     }
 
     @Override
     public BlockState rotate(BlockState state, Rotation rot) {
-        return state.with(FACING, rot.rotate(state.get(FACING)));
+        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
     }
 
     @Override
     public BlockState mirror(BlockState state, Mirror mirrorIn) {
-        return state.rotate(mirrorIn.toRotation(state.get(FACING)));
+        return state.rotate(mirrorIn.getRotation(state.getValue(FACING)));
     }
 
     @Override
-    public BlockRenderType getRenderType(BlockState state) {
+    public BlockRenderType getRenderShape(BlockState state) {
         return BlockRenderType.MODEL;
     }
 
     @Override
-    public void fillStateContainer(StateContainer.Builder<Block, BlockState> builder) {
+    public void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
         builder.add(FACING);
     }
 
     @Override
-    public int getOpacity(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    public int getLightBlock(BlockState state, IBlockReader worldIn, BlockPos pos) {
         return 0;
     }
 }

@@ -38,17 +38,17 @@ public class RenderUtil {
     }
 
     public static int getUWithDirection(BlockState state, BlockPos p) {
-        Direction direction = state.get(BillboardBlock.FACING);
-        return direction.getXOffset() == 0 ? p.getX() : p.getZ();
+        Direction direction = state.getValue(BillboardBlock.FACING);
+        return direction.getStepX() == 0 ? p.getX() : p.getZ();
     }
 
     public static void initWidthHeight(BillboardTileEntity te) {
         final BlockState state = te.getBlockState();
         if (te.getChildren().isEmpty()) {
-            te.minWidth = getUWithDirection(state, te.getPos());
-            te.minHeight = te.getPos().getY();
-            te.maxWidth = getUWithDirection(state, te.getPos());
-            te.maxHeight = te.getPos().getY();
+            te.minWidth = getUWithDirection(state, te.getBlockPos());
+            te.minHeight = te.getBlockPos().getY();
+            te.maxWidth = getUWithDirection(state, te.getBlockPos());
+            te.maxHeight = te.getBlockPos().getY();
             te.uv = new Vector4f(0, 0, 1, 1);
             return;
         }
@@ -62,18 +62,18 @@ public class RenderUtil {
             minY = Math.min(minY, childPos.getY());
             maxY = Math.max(maxY, childPos.getY());
         }
-        te.minWidth = Math.min(minX, getUWithDirection(state, te.getPos()));
-        te.maxWidth = Math.max(maxX, getUWithDirection(state, te.getPos()));
-        te.minHeight = Math.min(minY, te.getPos().getY());
-        te.maxHeight = Math.max(maxY, te.getPos().getY());
-        te.uv = RenderUtil.getUV(te, te.getPos());
+        te.minWidth = Math.min(minX, getUWithDirection(state, te.getBlockPos()));
+        te.maxWidth = Math.max(maxX, getUWithDirection(state, te.getBlockPos()));
+        te.minHeight = Math.min(minY, te.getBlockPos().getY());
+        te.maxHeight = Math.max(maxY, te.getBlockPos().getY());
+        te.uv = RenderUtil.getUV(te, te.getBlockPos());
     }
 
     public static boolean invert(BlockState state) {
-        return state.get(BillboardBlock.FACING) == Direction.NORTH || state.get(BillboardBlock.FACING) == Direction.EAST;
+        return state.getValue(BillboardBlock.FACING) == Direction.NORTH || state.getValue(BillboardBlock.FACING) == Direction.EAST;
     }
 
     public static void openGui(BillboardTileEntity billboard) {
-        Minecraft.getInstance().displayGuiScreen(new BillboardScreen(billboard.getParent()));
+        Minecraft.getInstance().setScreen(new BillboardScreen(billboard.getParent()));
     }
 }

@@ -5,7 +5,6 @@ import com.lclc98.billboard.block.BillboardTileEntity;
 import com.lclc98.billboard.network.UpdateMessage;
 import com.lclc98.billboard.util.TextureUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.DialogTexts;
 import net.minecraft.client.gui.screen.Screen;
 import net.minecraft.client.gui.widget.TextFieldWidget;
@@ -14,8 +13,6 @@ import net.minecraft.client.gui.widget.button.CheckboxButton;
 import net.minecraft.util.StringUtils;
 import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TranslationTextComponent;
-
-import java.util.regex.Matcher;
 
 public class BillboardScreen extends Screen {
 
@@ -33,18 +30,18 @@ public class BillboardScreen extends Screen {
     @Override
     protected void init() {
         this.commandTextField = new TextFieldWidget(this.font, this.width / 2 - 150, this.height / 2 - 40, 300, 20, new TranslationTextComponent("advMode.command"));
-        this.commandTextField.setText(this.parent.getTextureUrl());
+        this.commandTextField.setValue(this.parent.getTextureUrl());
         this.checkboxButton = new CheckboxButton(this.width / 2 - 75, this.height / 2 - 15, 20, 20, new StringTextComponent("Lock to owner"), parent.locked, true);
 
-        this.checkboxButton.active = this.minecraft.player.getUniqueID() == this.parent.ownerId;
+        this.checkboxButton.active = this.minecraft.player.getUUID() == this.parent.ownerId;
         this.children.add(this.commandTextField);
         this.addButton(this.checkboxButton);
 
         this.doneButton = this.addButton(new Button(this.width / 2 - 75, this.height / 2 + 10, 150, 20, DialogTexts.GUI_DONE, (p_214187_1_) -> {
-            String textureUrl = this.commandTextField.getText();
-            if (TextureUtil.validateUrl(this.commandTextField.getText())) {
-                Billboard.NETWORK.sendToServer(new UpdateMessage(this.parent.getPos(), textureUrl, this.checkboxButton.isChecked()));
-                this.closeScreen();
+            String textureUrl = this.commandTextField.getValue();
+            if (TextureUtil.validateUrl(textureUrl)) {
+                Billboard.NETWORK.sendToServer(new UpdateMessage(this.parent.getBlockPos(), textureUrl, this.checkboxButton.selected()));
+                this.onClose();
             } else {
                 this.message = "Invalid url, Imgur link only e.g. https://i.imgur.com/DHHCsdx.png (or jpg, or jpeg)";
             }

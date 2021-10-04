@@ -43,7 +43,7 @@ public class BillboardTileEntity extends TileEntity {
 
     public BillboardTileEntity() {
         super(Billboard.BILLBOARD_TE_TYPE);
-        this.chunkPos = new LazyValue<>(() -> new ChunkPos(this.pos));
+        this.chunkPos = new LazyValue<>(() -> new ChunkPos(this.worldPosition));
     }
 
     public void setTexture(String textureUrl) {
@@ -80,10 +80,10 @@ public class BillboardTileEntity extends TileEntity {
         if (!parent.children.contains(childPos)) {
             parent.children.add(childPos);
 
-            TileEntity childTe = parent.world.getTileEntity(childPos);
+            TileEntity childTe = parent.level.getBlockEntity(childPos);
             if (childTe instanceof BillboardTileEntity) {
                 BillboardTileEntity childBillboard = ((BillboardTileEntity) childTe);
-                childBillboard.parentPos = parent.pos;
+                childBillboard.parentPos = parent.worldPosition;
             }
         }
         parent.sync();
@@ -102,7 +102,7 @@ public class BillboardTileEntity extends TileEntity {
             return this;
         }
 
-        TileEntity tileEntity = this.world.getTileEntity(this.parentPos);
+        TileEntity tileEntity = this.level.getBlockEntity(this.parentPos);
         if (tileEntity instanceof BillboardTileEntity) {
             return (BillboardTileEntity) tileEntity;
         }
@@ -112,29 +112,29 @@ public class BillboardTileEntity extends TileEntity {
     }
 
     public void sync() {
-        if (this.world instanceof ServerWorld) {
+        if (this.level instanceof ServerWorld) {
             if (this.isParent()) {
                 for (BlockPos pos : this.children) {
-                    TileEntity childTE = this.world.getTileEntity(pos);
+                    TileEntity childTE = this.level.getBlockEntity(pos);
                     if (childTE instanceof BillboardTileEntity) {
                         ((BillboardTileEntity) childTE).sync();
                     }
                 }
             }
             final IPacket<?> packet = this.getUpdatePacket();
-            sendToTracking((ServerWorld) this.world, this.chunkPos.getValue(), packet, false);
+            sendToTracking((ServerWorld) this.level, this.chunkPos.get(), packet, false);
         }
     }
 
     public static void sendToTracking(ServerWorld world, ChunkPos chunkPos, IPacket<?> packet, boolean boundaryOnly) {
-        world.getChunkProvider().chunkManager.getTrackingPlayers(chunkPos, boundaryOnly).forEach(p -> p.connection.sendPacket(packet));
+        world.getChunkSource().chunkMap.getPlayers(chunkPos, boundaryOnly).forEach(p -> p.connection.send(packet));
     }
 
     @Override
-    public void remove() {
-        super.remove();
+    public void setRemoved() {
+        super.setRemoved();
 
-        if (this.world != null && this.world.isRemote) {
+        if (this.level != null && this.level.isClientSide) {
             return;
         }
 
@@ -142,7 +142,7 @@ public class BillboardTileEntity extends TileEntity {
             if (!this.children.isEmpty()) {
                 BlockPos newParent = this.children.stream().findFirst().get();
                 this.children.remove(newParent);
-                TileEntity tileEntity = this.world.getTileEntity(newParent);
+                TileEntity tileEntity = this.level.getBlockEntity(newParent);
                 if (tileEntity instanceof BillboardTileEntity) {
                     BillboardTileEntity billboard = (BillboardTileEntity) tileEntity;
                     billboard.parentPos = null;
@@ -151,7 +151,7 @@ public class BillboardTileEntity extends TileEntity {
                     billboard.locked = this.locked;
                     billboard.setTexture(this.textureUrl);
                     for (BlockPos pos : billboard.children) {
-                        TileEntity childTE = this.world.getTileEntity(pos);
+                        TileEntity childTE = this.level.getBlockEntity(pos);
                         if (childTE instanceof BillboardTileEntity) {
                             BillboardTileEntity childBillboard = ((BillboardTileEntity) childTE);
                             childBillboard.parentPos = newParent;
@@ -161,10 +161,10 @@ public class BillboardTileEntity extends TileEntity {
                 }
             }
         } else {
-            TileEntity tileEntity = this.world.getTileEntity(this.parentPos);
+            TileEntity tileEntity = this.level.getBlockEntity(this.parentPos);
             if (tileEntity instanceof BillboardTileEntity) {
                 BillboardTileEntity billboard = (BillboardTileEntity) tileEntity;
-                billboard.children.remove(this.pos);
+                billboard.children.remove(this.worldPosition);
                 billboard.dirty = true;
                 billboard.sync();
             }
@@ -173,17 +173,17 @@ public class BillboardTileEntity extends TileEntity {
 
     public boolean hasPermission(PlayerEntity player) {
         if (this.ownerId == null) {
-            this.ownerId = player.getUniqueID();
+            this.ownerId = player.getUUID();
         }
-        return !this.locked || player.hasPermissionLevel(2) || this.ownerId.equals(player.getUniqueID());
+        return !this.locked || player.hasPermissions(2) || this.ownerId.equals(player.getUUID());
     }
 
     @Override
-    public void read(BlockState state, CompoundNBT nbt) {
-        super.read(state, nbt);
+    public void load(BlockState state, CompoundNBT nbt) {
+        super.load(state, nbt);
 
         if (nbt.contains("ownerId")) {
-            this.ownerId = nbt.getUniqueId("ownerId");
+            this.ownerId = nbt.getUUID("ownerId");
         }
 
         if (nbt.contains("locked")) {
@@ -221,9 +221,9 @@ public class BillboardTileEntity extends TileEntity {
     }
 
     @Override
-    public CompoundNBT write(CompoundNBT compound) {
+    public CompoundNBT save(CompoundNBT compound) {
         if (this.ownerId != null) {
-            compound.putUniqueId("ownerId", this.ownerId);
+            compound.putUUID("ownerId", this.ownerId);
         }
 
         compound.putBoolean("locked", this.locked);
@@ -250,22 +250,22 @@ public class BillboardTileEntity extends TileEntity {
             compound.put("children", tagList);
         }
 
-        return super.write(compound);
+        return super.save(compound);
     }
 
     @Override
     public SUpdateTileEntityPacket getUpdatePacket() {
-        return new SUpdateTileEntityPacket(this.pos, 0, this.getUpdateTag());
+        return new SUpdateTileEntityPacket(this.worldPosition, 0, this.getUpdateTag());
     }
 
     @Override
     public CompoundNBT getUpdateTag() {
-        return this.write(new CompoundNBT());
+        return this.save(new CompoundNBT());
     }
 
     @Override
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
         super.onDataPacket(net, packet);
-        this.read(this.getBlockState(), packet.getNbtCompound());
+        this.load(this.getBlockState(), packet.getTag());
     }
 }

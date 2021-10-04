@@ -26,7 +26,7 @@ public class Billboard {
     public final static String MOD_ID = "billboard";
 
     public static final Block BILLBOARD_BLOCK = new BillboardBlock();
-    public static final TileEntityType<BillboardTileEntity> BILLBOARD_TE_TYPE = TileEntityType.Builder.create(BillboardTileEntity::new, BILLBOARD_BLOCK).build(null);
+    public static final TileEntityType<BillboardTileEntity> BILLBOARD_TE_TYPE = TileEntityType.Builder.of(BillboardTileEntity::new, BILLBOARD_BLOCK).build(null);
     public static Configuration config;
 
     private static final String PROTOCOL_VERSION = "1";
@@ -58,7 +58,7 @@ public class Billboard {
 
     @SubscribeEvent
     public static void registerItem(RegistryEvent.Register<Item> register) {
-        Item item = new BlockItem(BILLBOARD_BLOCK, new Item.Properties().group(ItemGroup.MISC));
+        Item item = new BlockItem(BILLBOARD_BLOCK, new Item.Properties().tab(ItemGroup.TAB_MISC));
         item.setRegistryName(BILLBOARD_BLOCK.getRegistryName());
         register.getRegistry().register(item);
     }
