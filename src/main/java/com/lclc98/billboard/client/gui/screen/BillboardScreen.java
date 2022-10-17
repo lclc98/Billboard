@@ -19,7 +19,6 @@ public class BillboardScreen extends Screen {
     protected TextFieldWidget commandTextField;
     protected CheckboxButton checkboxButton;
     private final BillboardTileEntity parent;
-    private Button doneButton;
     private String message = null;
 
     public BillboardScreen(BillboardTileEntity parent) {
@@ -30,6 +29,7 @@ public class BillboardScreen extends Screen {
     @Override
     protected void init() {
         this.commandTextField = new TextFieldWidget(this.font, this.width / 2 - 150, this.height / 2 - 40, 300, 20, new TranslationTextComponent("advMode.command"));
+        this.commandTextField.setMaxLength(10000);
         this.commandTextField.setValue(this.parent.getTextureUrl());
         this.checkboxButton = new CheckboxButton(this.width / 2 - 75, this.height / 2 - 15, 20, 20, new StringTextComponent("Lock to owner"), parent.locked, true);
 
@@ -37,7 +37,7 @@ public class BillboardScreen extends Screen {
         this.children.add(this.commandTextField);
         this.addButton(this.checkboxButton);
 
-        this.doneButton = this.addButton(new Button(this.width / 2 - 75, this.height / 2 + 10, 150, 20, DialogTexts.GUI_DONE, (p_214187_1_) -> {
+        this.addButton(new Button(this.width / 2 - 75, this.height / 2 + 10, 150, 20, DialogTexts.GUI_DONE, (p_214187_1_) -> {
             String textureUrl = this.commandTextField.getValue();
             if (TextureUtil.validateUrl(textureUrl)) {
                 Billboard.NETWORK.sendToServer(new UpdateMessage(this.parent.getBlockPos(), textureUrl, this.checkboxButton.selected()));

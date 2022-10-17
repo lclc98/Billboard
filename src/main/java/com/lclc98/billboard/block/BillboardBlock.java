@@ -1,6 +1,7 @@
 package com.lclc98.billboard.block;
 
 import com.lclc98.billboard.Billboard;
+import com.lclc98.billboard.client.video.VideoDisplay;
 import com.lclc98.billboard.util.RenderUtil;
 import net.minecraft.block.*;
 import net.minecraft.block.material.Material;
@@ -51,7 +52,7 @@ public class BillboardBlock extends ContainerBlock {
 
     @Override
     public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (worldIn.isClientSide || !(placer instanceof PlayerEntity)) {
+        if (!(placer instanceof PlayerEntity)) {
             return;
         }
         PlayerEntity uuid = (PlayerEntity) placer;

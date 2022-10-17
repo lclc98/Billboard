@@ -3,10 +3,12 @@ package com.lclc98.billboard.client.renderer.tileentity;
 import com.lclc98.billboard.Billboard;
 import com.lclc98.billboard.block.BillboardBlock;
 import com.lclc98.billboard.block.BillboardTileEntity;
+import com.lclc98.billboard.client.VideoHandler;
+import com.lclc98.billboard.client.video.VideoDisplay;
 import com.lclc98.billboard.util.RenderUtil;
-import com.lclc98.billboard.util.TextureUtil;
 import com.mojang.blaze3d.matrix.MatrixStack;
 import com.mojang.blaze3d.vertex.IVertexBuilder;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IRenderTypeBuffer;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.tileentity.TileEntityRenderer;
@@ -15,6 +17,7 @@ import net.minecraft.util.Direction;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.vector.Matrix4f;
 import net.minecraft.util.math.vector.Vector4f;
+import uk.co.caprica.vlcj.player.component.CallbackMediaPlayerComponent;
 
 public class BillBoardTileEntityRender extends TileEntityRenderer<BillboardTileEntity> {
 
@@ -23,6 +26,8 @@ public class BillBoardTileEntityRender extends TileEntityRenderer<BillboardTileE
     public BillBoardTileEntityRender(TileEntityRendererDispatcher rendererDispatcherIn) {
         super(rendererDispatcherIn);
     }
+
+    boolean b = false;
 
     @Override
     public void render(BillboardTileEntity te, float partialTicks, MatrixStack matrixStackIn, IRenderTypeBuffer bufferIn, int combinedLightIn, int combinedOverlayIn) {
@@ -50,7 +55,15 @@ public class BillBoardTileEntityRender extends TileEntityRenderer<BillboardTileE
 
         renderSquare(TEXTURE_WHITE, new Vector4f(0, 1, 0, 1), bufferIn, matrix, combinedOverlayIn, combinedLightIn);
 
-        renderSquare(TextureUtil.getTexture(billboard), te.getUV(), bufferIn, matrix, combinedOverlayIn, combinedLightIn);
+        VideoDisplay videoDisplay = VideoHandler.getVideo(te.getParent());
+        if (videoDisplay != null) {
+//            if (b != Minecraft.getInstance().isPaused()) {
+//                CallbackMediaPlayerComponent player = videoDisplay.player;
+//                player.mediaPlayer().submit(() -> player.mediaPlayer().controls().setPause(Minecraft.getInstance().isPaused()));
+//            }
+            renderSquare(videoDisplay.resourceLocation, te.getUV(), bufferIn, matrix, combinedOverlayIn, combinedLightIn);
+//            b = Minecraft.getInstance().isPaused();
+        }
         matrixStackIn.popPose();
     }
 

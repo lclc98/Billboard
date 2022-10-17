@@ -1,6 +1,7 @@
 package com.lclc98.billboard.block;
 
 import com.lclc98.billboard.Billboard;
+import com.lclc98.billboard.client.VideoHandler;
 import net.minecraft.block.BlockState;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.nbt.CompoundNBT;
@@ -38,8 +39,8 @@ public class BillboardTileEntity extends TileEntity {
     public Vector4f uv;
     public boolean dirty;
 
-    private String textureUrl = "https://i.imgur.com/y9S27IN.png";
-    private ResourceLocation textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + DigestUtils.sha256Hex(this.textureUrl));
+    private String textureUrl = "C:\\Users\\lclc98\\Downloads\\sample-mp4-file.mp4";
+    private ResourceLocation textureLocation;
 
     public BillboardTileEntity() {
         super(Billboard.BILLBOARD_TE_TYPE);
@@ -48,15 +49,18 @@ public class BillboardTileEntity extends TileEntity {
 
     public void setTexture(String textureUrl) {
         this.textureUrl = textureUrl;
-        this.textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + DigestUtils.sha256Hex(this.textureUrl));
+        this.textureLocation = null;
     }
 
     public ResourceLocation getTextureLocation() {
+        if (this.textureLocation == null) {
+            this.textureLocation = new ResourceLocation(Billboard.MOD_ID, "billboards/" + DigestUtils.sha256Hex(this.textureUrl));
+        }
         return this.textureLocation;
     }
 
     public String getTextureUrl() {
-        return this.textureUrl;
+        return "";
     }
 
     public void setUV(Vector4f uv) {
@@ -134,6 +138,8 @@ public class BillboardTileEntity extends TileEntity {
     public void setRemoved() {
         super.setRemoved();
 
+        VideoHandler.removeVideo(this);
+
         if (this.level != null && this.level.isClientSide) {
             return;
         }
@@ -149,6 +155,7 @@ public class BillboardTileEntity extends TileEntity {
                     billboard.children = this.children;
                     billboard.ownerId = this.ownerId;
                     billboard.locked = this.locked;
+                    billboard.textureLocation = this.textureLocation;
                     billboard.setTexture(this.textureUrl);
                     for (BlockPos pos : billboard.children) {
                         TileEntity childTE = this.level.getBlockEntity(pos);
@@ -267,5 +274,9 @@ public class BillboardTileEntity extends TileEntity {
     public void onDataPacket(NetworkManager net, SUpdateTileEntityPacket packet) {
         super.onDataPacket(net, packet);
         this.load(this.getBlockState(), packet.getTag());
+
+        if (this.level.isClientSide) {
+            VideoHandler.addVideo(this.getParent());
+        }
     }
 }

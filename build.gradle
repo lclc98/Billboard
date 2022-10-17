@@ -18,6 +18,7 @@ archivesBaseName = "${mod_name}-${version_minecraft}"
 java.toolchain.languageVersion = JavaLanguageVersion.of(8)
 
 minecraft {
+    accessTransformer = file('src/main/resources/META-INF/accesstransformer.cfg')
     mappings channel: 'official', version: '1.16.5'
     runs {
         client {
@@ -50,8 +51,7 @@ minecraft {
 
 dependencies {
     minecraft "net.minecraftforge:forge:${version_minecraft}-${version_forge}"
-    implementation("uk.co.caprica:vlcj:4.7.1")
-    implementation("uk.co.caprica:vlcj-natives:4.5.0")
+    implementation "uk.co.caprica:vlcj:4.7.1"
 }
 
 jar {
