@@ -3,11 +3,11 @@ package com.lclc98.billboard.util;
 import com.lclc98.billboard.block.BillboardBlock;
 import com.lclc98.billboard.block.BillboardTileEntity;
 import com.lclc98.billboard.client.gui.screen.BillboardScreen;
-import net.minecraft.block.BlockState;
+import com.mojang.math.Vector4f;
 import net.minecraft.client.Minecraft;
-import net.minecraft.util.Direction;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.vector.Vector4f;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.world.level.block.state.BlockState;
 
 public class RenderUtil {
 

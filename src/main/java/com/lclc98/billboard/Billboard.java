@@ -2,31 +2,37 @@ package com.lclc98.billboard;
 
 import com.lclc98.billboard.block.BillboardBlock;
 import com.lclc98.billboard.block.BillboardTileEntity;
-import com.lclc98.billboard.client.renderer.tileentity.BillBoardTileEntityRender;
 import com.lclc98.billboard.network.UpdateMessage;
-import net.minecraft.block.Block;
-import net.minecraft.item.BlockItem;
-import net.minecraft.item.Item;
-import net.minecraft.item.ItemGroup;
-import net.minecraft.tileentity.TileEntityType;
-import net.minecraft.util.ResourceLocation;
-import net.minecraftforge.event.RegistryEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.client.registry.ClientRegistry;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.BlockItem;
+import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.event.lifecycle.FMLClientSetupEvent;
 import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.fml.network.NetworkRegistry;
-import net.minecraftforge.fml.network.simple.SimpleChannel;
+import net.minecraftforge.network.NetworkRegistry;
+import net.minecraftforge.network.simple.SimpleChannel;
+import net.minecraftforge.registries.DeferredRegister;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.RegistryObject;
 
 @Mod.EventBusSubscriber(modid = Billboard.MOD_ID, bus = Mod.EventBusSubscriber.Bus.MOD)
 @Mod(value = Billboard.MOD_ID)
 public class Billboard {
     public final static String MOD_ID = "billboard";
 
-    public static final Block BILLBOARD_BLOCK = new BillboardBlock();
-    public static final TileEntityType<BillboardTileEntity> BILLBOARD_TE_TYPE = TileEntityType.Builder.of(BillboardTileEntity::new, BILLBOARD_BLOCK).build(null);
+    private static final DeferredRegister<Block> BLOCKS = DeferredRegister.create(ForgeRegistries.BLOCKS, MOD_ID);
+    private static final DeferredRegister<Item> ITEMS = DeferredRegister.create(ForgeRegistries.ITEMS, MOD_ID);
+    private static final DeferredRegister<BlockEntityType<?>> BLOCK_ENTITY_TYPES = DeferredRegister.create(ForgeRegistries.BLOCK_ENTITY_TYPES, MOD_ID);
+
+    public static final RegistryObject<Block> BILLBOARD_BLOCK = BLOCKS.register("billboard", BillboardBlock::new);
+    public static final RegistryObject<Item> BILLBOARD_BLOCK_ITEM = ITEMS.register("billboard", () -> new BlockItem(BILLBOARD_BLOCK.get(), new Item.Properties().tab(CreativeModeTab.TAB_MISC)));
+
+    public static final RegistryObject<BlockEntityType<BillboardTileEntity>> BILLBOARD_TE_TYPE = BLOCK_ENTITY_TYPES.register(
+            "billboard", () -> BlockEntityType.Builder.of(BillboardTileEntity::new, BILLBOARD_BLOCK.get()).build(null)
+    );
+
     public static Configuration config;
 
     private static final String PROTOCOL_VERSION = "1";
@@ -37,35 +43,17 @@ public class Billboard {
     );
 
     public Billboard() {
+        BLOCKS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        ITEMS.register(FMLJavaModLoadingContext.get().getModEventBus());
+        BLOCK_ENTITY_TYPES.register(FMLJavaModLoadingContext.get().getModEventBus());
+
         NETWORK.registerMessage(0, UpdateMessage.class, UpdateMessage::encode, UpdateMessage::decode, (message, context) -> context.get().enqueueWork(() -> {
             UpdateMessage.handle(message, context);
             context.get().setPacketHandled(true);
         }));
 
-        final IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        modBus.addListener(this::setupClient);
         config = new Configuration();
     }
 
-    private void setupClient(FMLClientSetupEvent event) {
-        ClientRegistry.bindTileEntityRenderer(BILLBOARD_TE_TYPE, BillBoardTileEntityRender::new);
-    }
 
-    @SubscribeEvent
-    public static void registerBlock(RegistryEvent.Register<Block> register) {
-        register.getRegistry().register(BILLBOARD_BLOCK);
-    }
-
-    @SubscribeEvent
-    public static void registerItem(RegistryEvent.Register<Item> register) {
-        Item item = new BlockItem(BILLBOARD_BLOCK, new Item.Properties().tab(ItemGroup.TAB_MISC));
-        item.setRegistryName(BILLBOARD_BLOCK.getRegistryName());
-        register.getRegistry().register(item);
-    }
-
-    @SubscribeEvent
-    public static void registerTileEntity(RegistryEvent.Register<TileEntityType<?>> register) {
-        BILLBOARD_TE_TYPE.setRegistryName(new ResourceLocation(MOD_ID, "billboard"));
-        register.getRegistry().register(BILLBOARD_TE_TYPE);
-    }
 }

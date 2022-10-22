@@ -1,89 +1,94 @@
 package com.lclc98.billboard.block;
 
-import com.lclc98.billboard.Billboard;
-import com.lclc98.billboard.client.video.VideoDisplay;
 import com.lclc98.billboard.util.RenderUtil;
-import net.minecraft.block.*;
-import net.minecraft.block.material.Material;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.BlockItemUseContext;
-import net.minecraft.item.ItemStack;
-import net.minecraft.state.DirectionProperty;
-import net.minecraft.state.StateContainer;
-import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.*;
-import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.math.BlockRayTraceResult;
-import net.minecraft.util.math.shapes.ISelectionContext;
-import net.minecraft.util.math.shapes.VoxelShape;
-import net.minecraft.util.math.shapes.VoxelShapes;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.world.IBlockReader;
-import net.minecraft.world.World;
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
+import net.minecraft.network.chat.Component;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.context.BlockPlaceContext;
+import net.minecraft.world.level.BlockGetter;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.level.block.BaseEntityBlock;
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.block.RenderShape;
+import net.minecraft.world.level.block.entity.BlockEntity;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.StateDefinition;
+import net.minecraft.world.level.block.state.properties.BlockStateProperties;
+import net.minecraft.world.level.block.state.properties.DirectionProperty;
+import net.minecraft.world.level.material.Material;
+import net.minecraft.world.phys.BlockHitResult;
+import net.minecraft.world.phys.shapes.CollisionContext;
+import net.minecraft.world.phys.shapes.Shapes;
+import net.minecraft.world.phys.shapes.VoxelShape;
+import org.jetbrains.annotations.Nullable;
 
-import javax.annotation.Nullable;
-
-public class BillboardBlock extends ContainerBlock {
-    public static final DirectionProperty FACING = HorizontalBlock.FACING;
+public class BillboardBlock extends BaseEntityBlock {
+    public static final DirectionProperty FACING = BlockStateProperties.FACING;
+    public static final DirectionProperty DIRECTION = BlockStateProperties.FACING;
 
     public BillboardBlock() {
         super(Properties.of(Material.WOOD).noCollission());
-        this.setRegistryName(new ResourceLocation(Billboard.MOD_ID, "billboard"));
         this.registerDefaultState(this.stateDefinition.any().setValue(FACING, Direction.NORTH));
     }
 
     @Override
-    public ActionResultType use(BlockState state, World worldIn, BlockPos pos, PlayerEntity player, Hand handIn, BlockRayTraceResult hit) {
-        if (worldIn.isClientSide) {
-            TileEntity te = worldIn.getBlockEntity(pos);
+    public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, InteractionHand handIn, BlockHitResult hit) {
+        if (level.isClientSide) {
+            BlockEntity te = level.getBlockEntity(pos);
             if (te instanceof BillboardTileEntity) {
                 BillboardTileEntity parent = ((BillboardTileEntity) te).getParent();
                 if (parent.hasPermission(player)) {
                     RenderUtil.openGui(parent);
                 } else {
-                    player.displayClientMessage(new StringTextComponent("You don't have permission to open this."), false);
+                    player.displayClientMessage(Component.literal("You don't have permission to open this."), false);
                 }
             }
         }
 
-        return ActionResultType.SUCCESS;
+        return InteractionResult.SUCCESS;
     }
 
     @Override
-    public void setPlacedBy(World worldIn, BlockPos pos, BlockState state, @Nullable LivingEntity placer, ItemStack stack) {
-        if (!(placer instanceof PlayerEntity)) {
+    public void setPlacedBy(Level level, BlockPos pos, BlockState state, @org.jetbrains.annotations.Nullable LivingEntity placer, ItemStack stack) {
+        if (level.isClientSide || !(placer instanceof Player player)) {
             return;
         }
-        PlayerEntity uuid = (PlayerEntity) placer;
 
         if (!placer.isCrouching()) {
             Direction currentFacing = state.getValue(FACING);
 
-            if (this.addParent(uuid, worldIn, pos, pos.relative(Direction.UP), currentFacing)) {
+            if (this.addParent(player, level, pos, pos.relative(Direction.UP), currentFacing)) {
                 return;
             }
-            if (this.addParent(uuid, worldIn, pos, pos.relative(Direction.DOWN), currentFacing)) {
+            if (this.addParent(player, level, pos, pos.relative(Direction.DOWN), currentFacing)) {
                 return;
             }
-            if (this.addParent(uuid, worldIn, pos, pos.relative(state.getValue(FACING).getClockWise()), currentFacing)) {
+            Direction dir = state.getValue(FACING);
+            if (dir == Direction.UP || dir == Direction.DOWN) {
                 return;
             }
-            if (this.addParent(uuid, worldIn, pos, pos.relative(state.getValue(FACING).getCounterClockWise()), currentFacing)) {
+            if (this.addParent(player, level, pos, pos.relative(dir.getClockWise()), currentFacing)) {
+                return;
+            }
+            if (this.addParent(player, level, pos, pos.relative(dir.getCounterClockWise()), currentFacing)) {
                 return;
             }
         }
-        TileEntity te = worldIn.getBlockEntity(pos);
-        if (te instanceof BillboardTileEntity) {
-            BillboardTileEntity parent = (BillboardTileEntity) te;
+        BlockEntity te = level.getBlockEntity(pos);
+        if (te instanceof BillboardTileEntity parent) {
             parent.ownerId = placer.getUUID();
         }
     }
 
     @Override
-    public VoxelShape getShape(BlockState state, IBlockReader worldIn, BlockPos pos, ISelectionContext context) {
+    public VoxelShape getShape(BlockState state, BlockGetter p_60556_, BlockPos p_60557_, CollisionContext p_60558_) {
         if (!state.hasProperty(FACING)) {
-            return VoxelShapes.block();
+            return Shapes.block();
         }
         final float f = 1.0f / 16.0f;
         Direction direction = state.getValue(FACING);
@@ -92,15 +97,18 @@ public class BillboardBlock extends ContainerBlock {
         float x2 = direction == Direction.EAST ? f : 1;
         float z1 = direction == Direction.NORTH ? 1.0f - f : 0;
         float z2 = direction == Direction.SOUTH ? f : 1;
-        return VoxelShapes.box(x1, 0, z1, x2, 1, z2);
+
+        float y1 = direction == Direction.DOWN ? 1.0f - f : 0;
+        float y2 = direction == Direction.UP ? f : 1;
+
+        return Shapes.box(x1, y1, z1, x2, y2, z2);
     }
 
-    public boolean addParent(PlayerEntity player, World world, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
-        BlockState offsetState = world.getBlockState(offsetPos);
+    public boolean addParent(Player player, Level level, BlockPos pos, BlockPos offsetPos, Direction currentFacing) {
+        BlockState offsetState = level.getBlockState(offsetPos);
         if (offsetState.getBlock() == this && offsetState.getValue(FACING) == currentFacing) {
-            TileEntity te = world.getBlockEntity(offsetPos);
-            if (te instanceof BillboardTileEntity) {
-                BillboardTileEntity parent = (BillboardTileEntity) te;
+            BlockEntity be = level.getBlockEntity(offsetPos);
+            if (be instanceof BillboardTileEntity parent) {
                 if (parent.hasPermission(player)) {
                     parent.addChild(pos);
                     return true;
@@ -110,39 +118,39 @@ public class BillboardBlock extends ContainerBlock {
         return false;
     }
 
+    @Nullable
     @Override
-    public BlockState getStateForPlacement(BlockItemUseContext context) {
-        Direction direction = context.getHorizontalDirection().getOpposite();
-        return this.defaultBlockState().setValue(FACING, direction);
+    public BlockState getStateForPlacement(BlockPlaceContext context) {
+        return this.defaultBlockState().setValue(FACING, context.getClickedFace());
     }
 
     @Override
-    public TileEntity newBlockEntity(IBlockReader worldIn) {
-        return new BillboardTileEntity();
+    public void onRemove(BlockState p_60515_, Level level, BlockPos pos, BlockState p_60518_, boolean p_60519_) {
+        BlockEntity te = level.getBlockEntity(pos);
+        if (te instanceof BillboardTileEntity parent) {
+            parent.blockBroken();
+        }
+        super.onRemove(p_60515_, level, pos, p_60518_, p_60519_);
     }
 
     @Override
-    public BlockState rotate(BlockState state, Rotation rot) {
-        return state.setValue(FACING, rot.rotate(state.getValue(FACING)));
+    public RenderShape getRenderShape(BlockState p_49232_) {
+        return RenderShape.MODEL;
     }
 
     @Override
-    public BlockState mirror(BlockState state, Mirror mirrorIn) {
-        return state.rotate(mirrorIn.getRotation(state.getValue(FACING)));
-    }
-
-    @Override
-    public BlockRenderType getRenderShape(BlockState state) {
-        return BlockRenderType.MODEL;
-    }
-
-    @Override
-    public void createBlockStateDefinition(StateContainer.Builder<Block, BlockState> builder) {
+    protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) {
         builder.add(FACING);
     }
 
     @Override
-    public int getLightBlock(BlockState state, IBlockReader worldIn, BlockPos pos) {
+    public int getLightBlock(BlockState p_60585_, BlockGetter p_60586_, BlockPos p_60587_) {
         return 0;
+    }
+
+    @Nullable
+    @Override
+    public BlockEntity newBlockEntity(BlockPos blockPos, BlockState blockState) {
+        return new BillboardTileEntity(blockPos, blockState);
     }
 }

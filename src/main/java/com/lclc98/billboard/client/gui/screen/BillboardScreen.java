@@ -4,40 +4,39 @@ import com.lclc98.billboard.Billboard;
 import com.lclc98.billboard.block.BillboardTileEntity;
 import com.lclc98.billboard.network.UpdateMessage;
 import com.lclc98.billboard.util.TextureUtil;
-import com.mojang.blaze3d.matrix.MatrixStack;
-import net.minecraft.client.gui.DialogTexts;
-import net.minecraft.client.gui.screen.Screen;
-import net.minecraft.client.gui.widget.TextFieldWidget;
-import net.minecraft.client.gui.widget.button.Button;
-import net.minecraft.client.gui.widget.button.CheckboxButton;
-import net.minecraft.util.StringUtils;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraft.util.text.TranslationTextComponent;
+import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Checkbox;
+import net.minecraft.client.gui.components.EditBox;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.network.chat.CommonComponents;
+import net.minecraft.network.chat.Component;
+import org.apache.commons.lang3.StringUtils;
 
 public class BillboardScreen extends Screen {
 
-    protected TextFieldWidget commandTextField;
-    protected CheckboxButton checkboxButton;
+    protected EditBox commandTextField;
+    protected Checkbox checkboxButton;
     private final BillboardTileEntity parent;
+    private Button doneButton;
     private String message = null;
 
     public BillboardScreen(BillboardTileEntity parent) {
-        super(new StringTextComponent("Edit Billboard"));
+        super(Component.literal("Edit Billboard"));
         this.parent = parent;
     }
 
     @Override
     protected void init() {
-        this.commandTextField = new TextFieldWidget(this.font, this.width / 2 - 150, this.height / 2 - 40, 300, 20, new TranslationTextComponent("advMode.command"));
-        this.commandTextField.setMaxLength(10000);
+        this.commandTextField = new EditBox(this.font, this.width / 2 - 150, this.height / 2 - 40, 300, 20, Component.translatable("advMode.command"));
         this.commandTextField.setValue(this.parent.getTextureUrl());
-        this.checkboxButton = new CheckboxButton(this.width / 2 - 75, this.height / 2 - 15, 20, 20, new StringTextComponent("Lock to owner"), parent.locked, true);
+        this.checkboxButton = new Checkbox(this.width / 2 - 75, this.height / 2 - 15, 20, 20, Component.literal("Lock to owner"), parent.locked, true);
 
         this.checkboxButton.active = this.minecraft.player.getUUID() == this.parent.ownerId;
-        this.children.add(this.commandTextField);
-        this.addButton(this.checkboxButton);
+        this.addWidget(this.commandTextField);
+//        this.addButton(this.checkboxButton);
 
-        this.addButton(new Button(this.width / 2 - 75, this.height / 2 + 10, 150, 20, DialogTexts.GUI_DONE, (p_214187_1_) -> {
+        this.doneButton = this.addRenderableWidget(new Button(this.width / 2 - 75, this.height / 2 + 10, 150, 20, CommonComponents.GUI_DONE, (p_214187_1_) -> {
             String textureUrl = this.commandTextField.getValue();
             if (TextureUtil.validateUrl(textureUrl)) {
                 Billboard.NETWORK.sendToServer(new UpdateMessage(this.parent.getBlockPos(), textureUrl, this.checkboxButton.selected()));
@@ -48,16 +47,17 @@ public class BillboardScreen extends Screen {
         }));
     }
 
+
     @Override
-    public void render(MatrixStack matrixStack, int mouseX, int mouseY, float partialTicks) {
-        this.renderBackground(matrixStack);
-        this.commandTextField.render(matrixStack, mouseX, mouseY, partialTicks);
+    public void render(PoseStack poseStack, int mouseX, int mouseY, float partialTicks) {
+        this.renderBackground(poseStack);
+        this.commandTextField.render(poseStack, mouseX, mouseY, partialTicks);
 
-        drawCenteredString(matrixStack, this.font, this.title, this.width / 2, 10, 16777215);
+        drawCenteredString(poseStack, this.font, this.title, this.width / 2, 10, 16777215);
 
-        if (!StringUtils.isNullOrEmpty(this.message)) {
-            drawCenteredString(matrixStack, this.font, this.message, this.width / 2, this.height / 2 - 30, 16777215);
+        if (!StringUtils.isEmpty(this.message)) {
+            drawCenteredString(poseStack, this.font, this.message, this.width / 2, this.height / 2 - 30, 16777215);
         }
-        super.render(matrixStack, mouseX, mouseY, partialTicks);
+        super.render(poseStack, mouseX, mouseY, partialTicks);
     }
 }

@@ -4,13 +4,12 @@ import com.electronwill.nightconfig.core.CommentedConfig;
 import com.electronwill.nightconfig.core.file.CommentedFileConfig;
 import net.minecraftforge.common.ForgeConfigSpec;
 import net.minecraftforge.fml.ModLoadingContext;
-import net.minecraftforge.fml.common.ObfuscationReflectionHelper;
 import net.minecraftforge.fml.config.ModConfig;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.util.ObfuscationReflectionHelper;
 
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
-import java.util.List;
 import java.util.regex.Pattern;
 
 public class Configuration {
@@ -31,12 +30,12 @@ public class Configuration {
         this.save();
     }
 
-    public Pattern getPattern () {
+    public Pattern getPattern() {
 
         return Pattern.compile(this.imageUrlRegex.get());
     }
 
-    private void save () {
+    private void save() {
 
         final ModConfig modConfig = new ModConfig(ModConfig.Type.SERVER, this.spec, ModLoadingContext.get().getActiveContainer());
         final CommentedFileConfig configData = modConfig.getHandler().reader(FMLPaths.CONFIGDIR.relative()).apply(modConfig);
@@ -44,9 +43,7 @@ public class Configuration {
 
         try {
             setConfigDataMethod.invoke(modConfig, configData);
-        }
-
-        catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
+        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException e) {
             throw new IllegalStateException(e);
         }
 

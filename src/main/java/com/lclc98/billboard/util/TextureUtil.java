@@ -2,50 +2,33 @@ package com.lclc98.billboard.util;
 
 import com.lclc98.billboard.Billboard;
 import com.lclc98.billboard.block.BillboardTileEntity;
-import com.lclc98.billboard.client.video.VideoDisplay;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.texture.DynamicTexture;
-import net.minecraft.client.renderer.texture.NativeImage;
-import net.minecraft.client.renderer.texture.Texture;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.HttpTexture;
 import net.minecraft.client.renderer.texture.TextureManager;
-import net.minecraft.util.ResourceLocation;
-import org.apache.commons.io.IOUtils;
+import net.minecraft.resources.ResourceLocation;
+import org.apache.commons.io.FilenameUtils;
 
-import java.io.ByteArrayInputStream;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
+import java.io.File;
 
 public class TextureUtil {
 
-    public static final ResourceLocation TEXTURE_BILLBOARD = new ResourceLocation(Billboard.MOD_ID, "textures/billboard/billboard.png");
+    private static final ResourceLocation TEXTURE_BILLBOARD = new ResourceLocation(Billboard.MOD_ID, "textures/billboard/billboard.png");
 
     public static boolean validateUrl(String url) {
-        return true;
-//        return Billboard.config.getPattern().matcher(url).find();
+        return Billboard.config.getPattern().matcher(url).find();
     }
 
-    //https://www.learningcontainer.com/wp-content/uploads/2020/05/sample-mp4-file.mp4
     public static ResourceLocation getTexture(BillboardTileEntity te) {
-
         ResourceLocation textureLocation = te.getTextureLocation();
         TextureManager texturemanager = Minecraft.getInstance().getTextureManager();
-        Texture texture = texturemanager.getTexture(textureLocation);
+        AbstractTexture texture = texturemanager.getTexture(textureLocation, null);
         if (texture == null) {
-            try {
-                texture = new DynamicTexture(getNativeImage(te.getTextureUrl()));
-                texturemanager.register(textureLocation, texture);
-            } catch (IOException e) {
-                e.printStackTrace();
-                return TEXTURE_BILLBOARD;
-            }
+            String fileName = FilenameUtils.getName(te.getTextureUrl());
+            texture = new HttpTexture(new File("cache/billboard", fileName), te.getTextureUrl(), TEXTURE_BILLBOARD, false, null);
+            texturemanager.register(textureLocation, texture);
         }
 
         return textureLocation;
-    }
-
-    private static NativeImage getNativeImage(String url) throws IOException {
-        InputStream is = new ByteArrayInputStream(IOUtils.toByteArray(new URL(url)));
-        return NativeImage.read(is);
     }
 }
