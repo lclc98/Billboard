@@ -30,6 +30,7 @@ public class BillboardTileEntity extends BlockEntity {
     public boolean locked = true;
     private Set<BlockPos> children = new HashSet<>();
     private BlockPos parentPos;
+    public int rotation = 0;
 
     public int minWidth;
     public int minHeight;
@@ -196,6 +197,8 @@ public class BillboardTileEntity extends BlockEntity {
             this.parentPos = new BlockPos(x, y, z);
         }
 
+       this.rotation = nbt.getInt("rotation");
+
         this.children.clear();
         if (nbt.contains("children")) {
             ListTag childrenTags = nbt.getList("children", 10);
@@ -228,6 +231,8 @@ public class BillboardTileEntity extends BlockEntity {
             compound.putInt("parentY", this.parentPos.getY());
             compound.putInt("parentZ", this.parentPos.getZ());
         }
+
+        compound.putInt("rotation", this.rotation);
 
         if (!this.children.isEmpty()) {
             ListTag tagList = new ListTag();

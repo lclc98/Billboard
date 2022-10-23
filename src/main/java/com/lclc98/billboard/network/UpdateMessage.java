@@ -14,25 +14,27 @@ public class UpdateMessage {
     public BlockPos pos;
     public String textureUrl;
     public boolean locked;
-
+    public int rotation;
     public UpdateMessage() {
 
     }
 
-    public UpdateMessage(BlockPos pos, String textureUrl, boolean locked) {
+    public UpdateMessage(BlockPos pos, String textureUrl, boolean locked, int rotation) {
         this.pos = pos;
         this.textureUrl = textureUrl;
         this.locked = locked;
+        this.rotation = rotation;
     }
 
     public static void encode(UpdateMessage message, FriendlyByteBuf buf) {
         buf.writeBlockPos(message.pos);
         buf.writeUtf(message.textureUrl);
         buf.writeBoolean(message.locked);
+        buf.writeInt(message.rotation);
     }
 
     public static UpdateMessage decode(FriendlyByteBuf buf) {
-        return new UpdateMessage(buf.readBlockPos(), buf.readUtf(), buf.readBoolean());
+        return new UpdateMessage(buf.readBlockPos(), buf.readUtf(), buf.readBoolean(), buf.readInt());
     }
 
     public static void handle(UpdateMessage message, Supplier<NetworkEvent.Context> ctx) {
@@ -43,9 +45,10 @@ public class UpdateMessage {
                 BillboardTileEntity billboard = (BillboardTileEntity) te;
 
                 if (billboard.hasPermission(sender)) {
-                    if (TextureUtil.validateUrl(message.textureUrl)) {
+                    billboard.rotation = message.rotation;
+//                    if (TextureUtil.validateUrl(message.textureUrl)) {
                         billboard.setTexture(message.textureUrl);
-                    }
+//                    }
                     if (billboard.ownerId.equals(sender.getUUID())) {
                         billboard.locked = message.locked;
                     }

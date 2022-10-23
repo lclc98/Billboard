@@ -20,6 +20,7 @@ public class RenderUtil {
     }
 
     public static Vector4f getUV(BillboardTileEntity billboard, BlockPos pos) {
+
         float minU;
         float minV = (billboard.maxHeight - pos.getY()) / RenderUtil.getHeight(billboard);
         float maxU;
@@ -34,7 +35,25 @@ public class RenderUtil {
             maxU = (getUWithDirection(state, pos) - billboard.minWidth + 1) / RenderUtil.getWidth(billboard);
         }
 
-        return new Vector4f(minU, minV, maxU, maxV);
+        Vector4f vector4f = new Vector4f(minU, minV, maxU, maxV);
+        if (billboard.rotation == 90 || billboard.rotation == 270 || billboard.rotation == 180) {
+            if (billboard.rotation != 180) {
+                minV = (billboard.maxHeight - pos.getY() + 1) / RenderUtil.getHeight(billboard);
+                maxV = (billboard.maxHeight - pos.getY()) / RenderUtil.getHeight(billboard);
+            }
+
+            final float angle = (float) Math.toRadians(billboard.rotation);
+            final float mid = 0.5f;
+            float minUC = (float) (((minU - mid) * Math.cos(angle)) - ((mid - minV) * Math.sin(angle))) + mid;
+            float minVC = (float) (mid - ((mid - minV) * Math.cos(angle) + (minU - mid) * Math.sin(angle)));
+
+
+            float maxUC = (float) ((maxU - mid) * Math.cos(angle) - (mid - maxV) * Math.sin(angle)) + mid;
+            float maxVC = (float) (mid - ((mid - maxV) * Math.cos(angle) + (maxU - mid) * Math.sin(angle)));
+
+            vector4f.set(minUC, minVC, maxUC, maxVC);
+        }
+        return vector4f;
     }
 
     public static int getUWithDirection(BlockState state, BlockPos p) {

@@ -3,7 +3,6 @@ package com.lclc98.billboard.client.gui.screen;
 import com.lclc98.billboard.Billboard;
 import com.lclc98.billboard.block.BillboardTileEntity;
 import com.lclc98.billboard.network.UpdateMessage;
-import com.lclc98.billboard.util.TextureUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Checkbox;
@@ -20,6 +19,7 @@ public class BillboardScreen extends Screen {
     private final BillboardTileEntity parent;
     private Button doneButton;
     private String message = null;
+    private int rotation;
 
     public BillboardScreen(BillboardTileEntity parent) {
         super(Component.literal("Edit Billboard"));
@@ -29,21 +29,37 @@ public class BillboardScreen extends Screen {
     @Override
     protected void init() {
         this.commandTextField = new EditBox(this.font, this.width / 2 - 150, this.height / 2 - 40, 300, 20, Component.translatable("advMode.command"));
+        this.commandTextField.setMaxLength(256);
         this.commandTextField.setValue(this.parent.getTextureUrl());
         this.checkboxButton = new Checkbox(this.width / 2 - 75, this.height / 2 - 15, 20, 20, Component.literal("Lock to owner"), parent.locked, true);
 
         this.checkboxButton.active = this.minecraft.player.getUUID() == this.parent.ownerId;
         this.addWidget(this.commandTextField);
-//        this.addButton(this.checkboxButton);
+
+        this.addRenderableWidget(new Button(this.width / 2 - 30, this.height / 2 + 50, 20, 20, Component.literal("0"), (p_214187_1_) -> {
+            rotation = 0;
+        }));
+
+        this.addRenderableWidget(new Button(this.width / 2 - 10, this.height / 2 + 50, 20, 20, Component.literal("90"), (p_214187_1_) -> {
+            rotation = 90;
+        }));
+
+        this.addRenderableWidget(new Button(this.width / 2 - 90, this.height / 2 + 50, 20, 20, Component.literal("180"), (p_214187_1_) -> {
+            rotation = 180;
+        }));
+
+        this.addRenderableWidget(new Button(this.width / 2 - 50, this.height / 2 + 50, 20, 20, Component.literal("270"), (p_214187_1_) -> {
+            rotation = 270;
+        }));
 
         this.doneButton = this.addRenderableWidget(new Button(this.width / 2 - 75, this.height / 2 + 10, 150, 20, CommonComponents.GUI_DONE, (p_214187_1_) -> {
             String textureUrl = this.commandTextField.getValue();
-            if (TextureUtil.validateUrl(textureUrl)) {
-                Billboard.NETWORK.sendToServer(new UpdateMessage(this.parent.getBlockPos(), textureUrl, this.checkboxButton.selected()));
-                this.onClose();
-            } else {
-                this.message = "Invalid url, Imgur link only e.g. https://i.imgur.com/DHHCsdx.png (or jpg, or jpeg)";
-            }
+//            if (TextureUtil.validateUrl(textureUrl)) {
+            Billboard.NETWORK.sendToServer(new UpdateMessage(this.parent.getBlockPos(), textureUrl, this.checkboxButton.selected(), rotation));
+            this.onClose();
+//            } else {
+//                this.message = "Invalid url, Imgur link only e.g. https://i.imgur.com/DHHCsdx.png (or jpg, or jpeg)";
+//            }
         }));
     }
 
