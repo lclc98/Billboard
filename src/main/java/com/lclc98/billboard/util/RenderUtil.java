@@ -19,12 +19,12 @@ public class RenderUtil {
         return billboard.maxHeight - billboard.minHeight + 1;
     }
 
-    public static Vector4f getUV(BillboardTileEntity billboard, BlockPos pos) {
+    public static Vector4f getUV(Direction direction, BillboardTileEntity billboard, BlockPos pos) {
 
         float minU;
-        float minV = (billboard.maxHeight - pos.getY()) / RenderUtil.getHeight(billboard);
+        float minV = (billboard.maxHeight - ((direction == Direction.UP||direction == Direction.DOWN ) ? pos.getZ() : pos.getY())) / RenderUtil.getHeight(billboard);
         float maxU;
-        float maxV = (billboard.maxHeight - pos.getY() + 1) / RenderUtil.getHeight(billboard);
+        float maxV = (billboard.maxHeight - ((direction == Direction.UP ||direction == Direction.DOWN ) ? pos.getZ() : pos.getY()) + 1) / RenderUtil.getHeight(billboard);
 
         BlockState state = billboard.getBlockState();
         if (invert(state)) {
@@ -35,11 +35,16 @@ public class RenderUtil {
             maxU = (getUWithDirection(state, pos) - billboard.minWidth + 1) / RenderUtil.getWidth(billboard);
         }
 
+        if (direction == Direction.DOWN && billboard.rotation == 0) {
+            float m = minV;
+            minV = maxV;
+            maxV = m;
+        }
         Vector4f vector4f = new Vector4f(minU, minV, maxU, maxV);
         if (billboard.rotation == 90 || billboard.rotation == 270 || billboard.rotation == 180) {
             if (billboard.rotation != 180) {
-                minV = (billboard.maxHeight - pos.getY() + 1) / RenderUtil.getHeight(billboard);
-                maxV = (billboard.maxHeight - pos.getY()) / RenderUtil.getHeight(billboard);
+                minV = (billboard.maxHeight - ((direction == Direction.UP || direction == Direction.DOWN) ? pos.getZ() : pos.getY()) + 1) / RenderUtil.getHeight(billboard);
+                maxV = (billboard.maxHeight - ((direction == Direction.UP || direction == Direction.DOWN) ? pos.getZ() : pos.getY())) / RenderUtil.getHeight(billboard);
             }
 
             final float angle = (float) Math.toRadians(billboard.rotation);
@@ -58,16 +63,20 @@ public class RenderUtil {
 
     public static int getUWithDirection(BlockState state, BlockPos p) {
         Direction direction = state.getValue(BillboardBlock.FACING);
+        if (direction == Direction.DOWN || direction == Direction.UP) {
+            return p.getX();
+        }
         return direction.getStepX() == 0 ? p.getX() : p.getZ();
     }
 
     public static void initWidthHeight(BillboardTileEntity te) {
         final BlockState state = te.getBlockState();
+        final Direction direction = state.getValue(BillboardBlock.FACING);
         if (te.getChildren().isEmpty()) {
             te.minWidth = getUWithDirection(state, te.getBlockPos());
-            te.minHeight = te.getBlockPos().getY();
+            te.minHeight = (direction == Direction.DOWN || direction == Direction.UP) ? te.getBlockPos().getZ() : te.getBlockPos().getY();
             te.maxWidth = getUWithDirection(state, te.getBlockPos());
-            te.maxHeight = te.getBlockPos().getY();
+            te.maxHeight = (direction == Direction.DOWN || direction == Direction.UP) ? te.getBlockPos().getZ() : te.getBlockPos().getY();
             te.uv = new Vector4f(0, 0, 1, 1);
             return;
         }
@@ -78,18 +87,19 @@ public class RenderUtil {
         for (BlockPos childPos : te.getChildren()) {
             minX = Math.min(minX, getUWithDirection(state, childPos));
             maxX = Math.max(maxX, getUWithDirection(state, childPos));
-            minY = Math.min(minY, childPos.getY());
-            maxY = Math.max(maxY, childPos.getY());
+            minY = Math.min(minY, (direction == Direction.DOWN || direction == Direction.UP) ? childPos.getZ() : childPos.getY());
+            maxY = Math.max(maxY, (direction== Direction.DOWN || direction == Direction.UP) ? childPos.getZ() : childPos.getY());
         }
         te.minWidth = Math.min(minX, getUWithDirection(state, te.getBlockPos()));
         te.maxWidth = Math.max(maxX, getUWithDirection(state, te.getBlockPos()));
-        te.minHeight = Math.min(minY, te.getBlockPos().getY());
-        te.maxHeight = Math.max(maxY, te.getBlockPos().getY());
-        te.uv = RenderUtil.getUV(te, te.getBlockPos());
+        te.minHeight = Math.min(minY, (direction == Direction.DOWN || direction == Direction.UP) ? te.getBlockPos().getZ() : te.getBlockPos().getY());
+        te.maxHeight = Math.max(maxY, (direction == Direction.DOWN || direction == Direction.UP) ? te.getBlockPos().getZ() : te.getBlockPos().getY());
+        te.uv = RenderUtil.getUV(direction, te, te.getBlockPos());
     }
 
     public static boolean invert(BlockState state) {
-        return state.getValue(BillboardBlock.FACING) == Direction.NORTH || state.getValue(BillboardBlock.FACING) == Direction.EAST;
+        Direction direction = state.getValue(BillboardBlock.FACING);
+        return direction == Direction.NORTH || direction == Direction.EAST || direction == Direction.DOWN || direction == Direction.UP;
     }
 
     public static void openGui(BillboardTileEntity billboard) {

@@ -147,6 +147,7 @@ public class BillboardTileEntity extends BlockEntity {
                     billboard.children = this.children;
                     billboard.ownerId = this.ownerId;
                     billboard.locked = this.locked;
+                    billboard.rotation = this.rotation;
                     billboard.setTexture(this.textureUrl);
                     for (BlockPos pos : billboard.children) {
                         BlockEntity childTE = this.level.getBlockEntity(pos);

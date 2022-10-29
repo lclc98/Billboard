@@ -36,24 +36,28 @@ public class BillBoardTileEntityRender implements BlockEntityRenderer<BillboardT
             return;
         }
 
-//        if (billboard.dirty) {
-        RenderUtil.initWidthHeight(billboard);
-        billboard.dirty = false;
-//        }
+        if (billboard.dirty) {
+            RenderUtil.initWidthHeight(billboard);
+            billboard.dirty = false;
+        }
 
-//        if (te.dirty) {
-        te.setUV(RenderUtil.getUV(billboard, te.getBlockPos()));
-        te.dirty = false;
-//        }
+        final Direction direction = te.getBlockState().getValue(BillboardBlock.FACING);
 
-        Direction direction = te.getBlockState().getValue(BillboardBlock.FACING);
+        if (te.dirty) {
+            te.setUV(RenderUtil.getUV(direction, billboard, te.getBlockPos()));
+            te.dirty = false;
+        }
+
         matrixStackIn.pushPose();
         Matrix4f matrix = matrixStackIn.last().pose();
 
         matrixStackIn.translate(0.5F, 0.5F, 0.5F);
 
         matrixStackIn.translate(direction.getStepX() * 0.5F, direction.getStepY() * 0.5F, direction.getStepZ() * 0.5F);
+//        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(direction.toYRot()-90));
+//        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(direction.toYRot()-90));
         matrixStackIn.mulPose(direction.getOpposite().getRotation());
+
         if (billboard.rotation == 90) {
             matrixStackIn.mulPose(Quaternion.fromXYZDegrees(new Vector3f(0, -billboard.rotation, 0)));
         }
@@ -61,7 +65,6 @@ public class BillBoardTileEntityRender implements BlockEntityRenderer<BillboardT
         if (billboard.rotation == 270) {
             matrixStackIn.mulPose(Quaternion.fromXYZDegrees(new Vector3f(0, billboard.rotation, 0)));
         }
-
 
         renderSquare(TEXTURE_WHITE, new Vector4f(0, 1, 0, 1), bufferIn, matrix, combinedOverlayIn, combinedLightIn);
 

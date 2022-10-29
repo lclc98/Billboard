@@ -61,22 +61,35 @@ public class BillboardBlock extends BaseEntityBlock {
 
         if (!placer.isCrouching()) {
             Direction currentFacing = state.getValue(FACING);
-
-            if (this.addParent(player, level, pos, pos.relative(Direction.UP), currentFacing)) {
-                return;
-            }
-            if (this.addParent(player, level, pos, pos.relative(Direction.DOWN), currentFacing)) {
-                return;
-            }
             Direction dir = state.getValue(FACING);
+
             if (dir == Direction.UP || dir == Direction.DOWN) {
-                return;
-            }
-            if (this.addParent(player, level, pos, pos.relative(dir.getClockWise()), currentFacing)) {
-                return;
-            }
-            if (this.addParent(player, level, pos, pos.relative(dir.getCounterClockWise()), currentFacing)) {
-                return;
+                if (this.addParent(player, level, pos, pos.relative(Direction.NORTH), currentFacing)) {
+                    return;
+                }
+                if (this.addParent(player, level, pos, pos.relative(Direction.SOUTH), currentFacing)) {
+                    return;
+                }
+                if (this.addParent(player, level, pos, pos.relative(Direction.EAST), currentFacing)) {
+                    return;
+                }
+                if (this.addParent(player, level, pos, pos.relative(Direction.WEST), currentFacing)) {
+                    return;
+                }
+            }else {
+                if (this.addParent(player, level, pos, pos.relative(Direction.UP), currentFacing)) {
+                    return;
+                }
+                if (this.addParent(player, level, pos, pos.relative(Direction.DOWN), currentFacing)) {
+                    return;
+                }
+
+                if (this.addParent(player, level, pos, pos.relative(dir.getClockWise()), currentFacing)) {
+                    return;
+                }
+                if (this.addParent(player, level, pos, pos.relative(dir.getCounterClockWise()), currentFacing)) {
+                    return;
+                }
             }
         }
         BlockEntity te = level.getBlockEntity(pos);
