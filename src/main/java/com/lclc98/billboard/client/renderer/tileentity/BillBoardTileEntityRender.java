@@ -27,7 +27,6 @@ public class BillBoardTileEntityRender implements BlockEntityRenderer<BillboardT
         this.entityRenderer = context.getEntityRenderer();
     }
 
-
     @Override
     public void render(BillboardTileEntity te, float partialTicks, PoseStack matrixStackIn, MultiBufferSource bufferIn, int combinedLightIn, int combinedOverlayIn) {
         BillboardTileEntity billboard = te.getParent();
@@ -56,19 +55,16 @@ public class BillBoardTileEntityRender implements BlockEntityRenderer<BillboardT
         matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(90));
         if (direction == Direction.UP) {
             matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(90));
-        }
-        if (direction == Direction.DOWN) {
+        } else if (direction == Direction.DOWN) {
             matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(-90));
-        }
-        if (direction != Direction.UP && direction != Direction.DOWN) {
+            matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(-180));
+        } else {
             matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(direction.get2DDataValue() * 90 - 180));
         }
 
-        if (direction == Direction.DOWN) {
-            matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(-180));
-        }
-
-        if (billboard.rotation == 90 || billboard.rotation == 270) {
+        if ((direction == Direction.DOWN || direction == Direction.UP) && (billboard.maxHeight - billboard.minHeight == 0 && billboard.maxWidth - billboard.minWidth == 0)) {
+            matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(billboard.rotation));
+        } else if (billboard.rotation == 90 || billboard.rotation == 270) {
             matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(-90));
         }
 
