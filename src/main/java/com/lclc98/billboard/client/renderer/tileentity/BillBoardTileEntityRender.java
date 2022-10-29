@@ -8,7 +8,6 @@ import com.lclc98.billboard.util.TextureUtil;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Matrix4f;
-import com.mojang.math.Quaternion;
 import com.mojang.math.Vector3f;
 import com.mojang.math.Vector4f;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -54,16 +53,23 @@ public class BillBoardTileEntityRender implements BlockEntityRenderer<BillboardT
         matrixStackIn.translate(0.5F, 0.5F, 0.5F);
 
         matrixStackIn.translate(direction.getStepX() * 0.5F, direction.getStepY() * 0.5F, direction.getStepZ() * 0.5F);
-//        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(direction.toYRot()-90));
-//        matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(direction.toYRot()-90));
-        matrixStackIn.mulPose(direction.getOpposite().getRotation());
-
-        if (billboard.rotation == 90) {
-            matrixStackIn.mulPose(Quaternion.fromXYZDegrees(new Vector3f(0, -billboard.rotation, 0)));
+        matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(90));
+        if (direction == Direction.UP) {
+            matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(90));
+        }
+        if (direction == Direction.DOWN) {
+            matrixStackIn.mulPose(Vector3f.XP.rotationDegrees(-90));
+        }
+        if (direction != Direction.UP && direction != Direction.DOWN) {
+            matrixStackIn.mulPose(Vector3f.ZP.rotationDegrees(direction.get2DDataValue() * 90 - 180));
         }
 
-        if (billboard.rotation == 270) {
-            matrixStackIn.mulPose(Quaternion.fromXYZDegrees(new Vector3f(0, billboard.rotation, 0)));
+        if (direction == Direction.DOWN) {
+            matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(-180));
+        }
+
+        if (billboard.rotation == 90 || billboard.rotation == 270) {
+            matrixStackIn.mulPose(Vector3f.YP.rotationDegrees(-90));
         }
 
         renderSquare(TEXTURE_WHITE, new Vector4f(0, 1, 0, 1), bufferIn, matrix, combinedOverlayIn, combinedLightIn);

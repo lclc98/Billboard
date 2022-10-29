@@ -22,9 +22,9 @@ public class RenderUtil {
     public static Vector4f getUV(Direction direction, BillboardTileEntity billboard, BlockPos pos) {
 
         float minU;
-        float minV = (billboard.maxHeight - ((direction == Direction.UP||direction == Direction.DOWN ) ? pos.getZ() : pos.getY())) / RenderUtil.getHeight(billboard);
+        float minV = (billboard.maxHeight - ((direction == Direction.UP || direction == Direction.DOWN) ? pos.getZ() : pos.getY())) / RenderUtil.getHeight(billboard);
         float maxU;
-        float maxV = (billboard.maxHeight - ((direction == Direction.UP ||direction == Direction.DOWN ) ? pos.getZ() : pos.getY()) + 1) / RenderUtil.getHeight(billboard);
+        float maxV = (billboard.maxHeight - ((direction == Direction.UP || direction == Direction.DOWN) ? pos.getZ() : pos.getY()) + 1) / RenderUtil.getHeight(billboard);
 
         BlockState state = billboard.getBlockState();
         if (invert(state)) {
@@ -35,11 +35,7 @@ public class RenderUtil {
             maxU = (getUWithDirection(state, pos) - billboard.minWidth + 1) / RenderUtil.getWidth(billboard);
         }
 
-        if (direction == Direction.DOWN && billboard.rotation == 0) {
-            float m = minV;
-            minV = maxV;
-            maxV = m;
-        }
+
         Vector4f vector4f = new Vector4f(minU, minV, maxU, maxV);
         if (billboard.rotation == 90 || billboard.rotation == 270 || billboard.rotation == 180) {
             if (billboard.rotation != 180) {
@@ -88,7 +84,7 @@ public class RenderUtil {
             minX = Math.min(minX, getUWithDirection(state, childPos));
             maxX = Math.max(maxX, getUWithDirection(state, childPos));
             minY = Math.min(minY, (direction == Direction.DOWN || direction == Direction.UP) ? childPos.getZ() : childPos.getY());
-            maxY = Math.max(maxY, (direction== Direction.DOWN || direction == Direction.UP) ? childPos.getZ() : childPos.getY());
+            maxY = Math.max(maxY, (direction == Direction.DOWN || direction == Direction.UP) ? childPos.getZ() : childPos.getY());
         }
         te.minWidth = Math.min(minX, getUWithDirection(state, te.getBlockPos()));
         te.maxWidth = Math.max(maxX, getUWithDirection(state, te.getBlockPos()));
@@ -99,7 +95,7 @@ public class RenderUtil {
 
     public static boolean invert(BlockState state) {
         Direction direction = state.getValue(BillboardBlock.FACING);
-        return direction == Direction.NORTH || direction == Direction.EAST || direction == Direction.DOWN || direction == Direction.UP;
+        return direction == Direction.NORTH || direction == Direction.EAST || direction == Direction.UP;
     }
 
     public static void openGui(BillboardTileEntity billboard) {

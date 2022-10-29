@@ -117,10 +117,12 @@ public class BillboardTileEntity extends BlockEntity {
                 for (BlockPos pos : this.children) {
                     BlockEntity childTE = this.level.getBlockEntity(pos);
                     if (childTE instanceof BillboardTileEntity) {
+                        ((BillboardTileEntity) childTE).dirty = true;
                         ((BillboardTileEntity) childTE).sync();
                     }
                 }
             }
+            this.dirty = true;
             final Packet<ClientGamePacketListener> packet = this.getUpdatePacket();
             sendToTracking((ServerLevel) this.level, this.chunkPos.get(), packet, false);
         }
@@ -198,7 +200,7 @@ public class BillboardTileEntity extends BlockEntity {
             this.parentPos = new BlockPos(x, y, z);
         }
 
-       this.rotation = nbt.getInt("rotation");
+        this.rotation = nbt.getInt("rotation");
 
         this.children.clear();
         if (nbt.contains("children")) {

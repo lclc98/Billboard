@@ -15,6 +15,7 @@ public class UpdateMessage {
     public String textureUrl;
     public boolean locked;
     public int rotation;
+
     public UpdateMessage() {
 
     }
@@ -46,9 +47,9 @@ public class UpdateMessage {
 
                 if (billboard.hasPermission(sender)) {
                     billboard.rotation = message.rotation;
-//                    if (TextureUtil.validateUrl(message.textureUrl)) {
+                    if (TextureUtil.validateUrl(message.textureUrl)) {
                         billboard.setTexture(message.textureUrl);
-//                    }
+                    }
                     if (billboard.ownerId.equals(sender.getUUID())) {
                         billboard.locked = message.locked;
                     }
